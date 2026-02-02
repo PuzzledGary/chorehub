@@ -73,12 +73,13 @@ ChoreHub is composed of several agents that work together to provide a comprehen
 **Current Entities**:
 - `Chore` - Represents a chore with properties like name, description, recurrence, assigned user
 - `RecurrenceType` - Enum for recurrence types (FIXED, FLEXIBLE, ONETIME)
+- `User` - Represents a household member with name and optional shortname
 
 **Current Repositories**:
 - `ChoreRepository` - Provides data access methods for Chore entities
+- `UserRepository` - Provides data access methods for User entities
 
 **Planned Entities**:
-- `User` - Represents a household member
 - `ChoreHistory` - Records of completed chores
 
 ## Scheduling Agent (Planned)

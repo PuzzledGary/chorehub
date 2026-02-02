@@ -2,6 +2,7 @@ package de.caransgar.chorehub.repository;
 
 import de.caransgar.chorehub.entity.Chore;
 import de.caransgar.chorehub.entity.RecurrenceType;
+import de.caransgar.chorehub.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,10 +20,14 @@ class ChoreRepositoryTest {
     @Autowired
     private ChoreRepository choreRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Test
     void testSaveAndFindChore() {
         // Given
-        Chore chore = new Chore("Clean Kitchen", "Weekly kitchen cleaning", RecurrenceType.FLEXIBLE, "P1W", 1L);
+        User user = userRepository.save(new User("Test User", "TU"));
+        Chore chore = new Chore("Clean Kitchen", "Weekly kitchen cleaning", RecurrenceType.FLEXIBLE, "P1W", user);
 
         // When
         Chore savedChore = choreRepository.save(chore);
@@ -31,12 +36,14 @@ class ChoreRepositoryTest {
         assertThat(savedChore.getId()).isNotNull();
         assertThat(savedChore.getName()).isEqualTo("Clean Kitchen");
         assertThat(savedChore.getRecurrenceType()).isEqualTo(RecurrenceType.FLEXIBLE);
+        assertThat(savedChore.getAssignedUser()).isEqualTo(user);
     }
 
     @Test
     void testFindById() {
         // Given
-        Chore chore = new Chore("Wash Dishes", "Daily dish washing", RecurrenceType.ONETIME, null, 2L);
+        User user = userRepository.save(new User("Another User", "AU"));
+        Chore chore = new Chore("Wash Dishes", "Daily dish washing", RecurrenceType.ONETIME, null, user);
         Chore savedChore = choreRepository.save(chore);
 
         // When
@@ -48,17 +55,19 @@ class ChoreRepositoryTest {
     }
 
     @Test
-    void testFindByAssignedUserId() {
+    void testFindByAssignedUser() {
         // Given
-        Chore chore1 = new Chore("Mow Lawn", "Monthly lawn mowing", RecurrenceType.FIXED, "0 0 1 * *", 1L);
-        Chore chore2 = new Chore("Vacuum", "Weekly vacuuming", RecurrenceType.FLEXIBLE, "P1W", 1L);
-        Chore chore3 = new Chore("Grocery Shopping", "Weekly shopping", RecurrenceType.FLEXIBLE, "P1W", 2L);
+        User user1 = userRepository.save(new User("User1", "U1"));
+        User user2 = userRepository.save(new User("User2", "U2"));
+        Chore chore1 = new Chore("Mow Lawn", "Monthly lawn mowing", RecurrenceType.FIXED, "0 0 1 * *", user1);
+        Chore chore2 = new Chore("Vacuum", "Weekly vacuuming", RecurrenceType.FLEXIBLE, "P1W", user1);
+        Chore chore3 = new Chore("Grocery Shopping", "Weekly shopping", RecurrenceType.FLEXIBLE, "P1W", user2);
         choreRepository.save(chore1);
         choreRepository.save(chore2);
         choreRepository.save(chore3);
 
         // When
-        List<Chore> choresForUser1 = choreRepository.findByAssignedUserId(1L);
+        List<Chore> choresForUser1 = choreRepository.findByAssignedUser(user1);
 
         // Then
         assertThat(choresForUser1).hasSize(2);
@@ -68,9 +77,14 @@ class ChoreRepositoryTest {
     @Test
     void testFindByRecurrenceType() {
         // Given
-        Chore chore1 = new Chore("Clean Bathroom", "Monthly cleaning", RecurrenceType.FIXED, "0 0 1 * *", 1L);
-        Chore chore2 = new Chore("Take out trash", "Weekly task", RecurrenceType.FLEXIBLE, "P1W", 1L);
-        Chore chore3 = new Chore("Fix sink", "One-time repair", RecurrenceType.ONETIME, null, 2L);
+        User user1 = userRepository.save(new User("User1", "U1"));
+        User user2 = userRepository.save(new User("User2", "U2"));
+        Chore chore1 = new Chore("Clean Bathroom", "Monthly cleaning", RecurrenceType.FIXED, "0 0 1 * *", user1);
+        Chore chore2 = new Chore("Take out trash", "Weekly task", RecurrenceType.FLEXIBLE, "P1W", user1);
+        Chore chore3 = new Chore("Fix sink", "One-time repair", RecurrenceType.ONETIME, null, user2);
+        choreRepository.save(chore1);
+        choreRepository.save(chore2);
+        choreRepository.save(chore3);
         choreRepository.save(chore1);
         choreRepository.save(chore2);
         choreRepository.save(chore3);
@@ -89,7 +103,8 @@ class ChoreRepositoryTest {
     @Test
     void testDeleteChore() {
         // Given
-        Chore chore = new Chore("Test Chore", "For deletion test", RecurrenceType.ONETIME, null, 1L);
+        User user = userRepository.save(new User("Delete User", "DU"));
+        Chore chore = new Chore("Test Chore", "For deletion test", RecurrenceType.ONETIME, null, user);
         Chore savedChore = choreRepository.save(chore);
 
         // When

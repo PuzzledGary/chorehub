@@ -23,7 +23,9 @@ public class Chore {
 
     private String recurrencePattern; // e.g., "0 0 1 * *" for cron, or "P4M" for ISO period
 
-    private Long assignedUserId; // Reference to user, using ID for now
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_user_id")
+    private User assignedUser;
 
     @Column(nullable = false)
     private LocalDateTime createdDate;
@@ -35,12 +37,12 @@ public class Chore {
     // Constructors
     public Chore() {}
 
-    public Chore(String name, String description, RecurrenceType recurrenceType, String recurrencePattern, Long assignedUserId) {
+    public Chore(String name, String description, RecurrenceType recurrenceType, String recurrencePattern, User assignedUser) {
         this.name = name;
         this.description = description;
         this.recurrenceType = recurrenceType;
         this.recurrencePattern = recurrencePattern;
-        this.assignedUserId = assignedUserId;
+        this.assignedUser = assignedUser;
         this.createdDate = LocalDateTime.now();
     }
 
@@ -85,12 +87,12 @@ public class Chore {
         this.recurrencePattern = recurrencePattern;
     }
 
-    public Long getAssignedUserId() {
-        return assignedUserId;
+    public User getAssignedUser() {
+        return assignedUser;
     }
 
-    public void setAssignedUserId(Long assignedUserId) {
-        this.assignedUserId = assignedUserId;
+    public void setAssignedUser(User assignedUser) {
+        this.assignedUser = assignedUser;
     }
 
     public LocalDateTime getCreatedDate() {
@@ -125,7 +127,7 @@ public class Chore {
                 ", description='" + description + '\'' +
                 ", recurrenceType=" + recurrenceType +
                 ", recurrencePattern='" + recurrencePattern + '\'' +
-                ", assignedUserId=" + assignedUserId +
+                ", assignedUser=" + (assignedUser != null ? assignedUser.getName() : null) +
                 ", createdDate=" + createdDate +
                 ", lastCompletedDate=" + lastCompletedDate +
                 ", nextDueDate=" + nextDueDate +
