@@ -1,7 +1,11 @@
 package de.caransgar.chorehub.entity;
 
 import jakarta.persistence.*;
+
+import java.time.Duration;
 import java.time.LocalDateTime;
+
+import org.springframework.scheduling.support.CronExpression;
 
 @Entity
 @Table(name = "chores")
@@ -44,6 +48,23 @@ public class Chore {
         this.recurrencePattern = recurrencePattern;
         this.assignedUser = assignedUser;
         this.createdDate = LocalDateTime.now();
+    }
+
+    public void completeChore() {
+        this.lastCompletedDate = LocalDateTime.now();
+        
+        if (this.recurrenceType == RecurrenceType.FIXED_SCHEDULE) {
+            // Use Spring's CronExpression or Quartz
+            var cron = CronExpression.parse(this.recurrencePattern);
+            // Next due date is based on CURRENT TIME, not the old due date, to avoid backlogs
+            this.nextDueDate = cron.next(LocalDateTime.now());
+            
+        } else if (this.recurrenceType == RecurrenceType.AFTER_COMPLETION) {
+            // Use Java Standard Duration (e.g., "P7D")
+            // "I cleaned it today, so remind me again in 7 days"
+            Duration interval = Duration.parse(this.recurrencePattern); 
+            this.nextDueDate = this.lastCompletedDate.plus(interval);
+        }
     }
 
     // Getters and Setters
