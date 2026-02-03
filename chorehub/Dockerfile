@@ -1,38 +1,38 @@
 # Stage 1: Build the application
-FROM gradle:8.5-jdk21-alpine AS builder
-
-WORKDIR /build
-
-# Copy Gradle config first to cache dependencies
-COPY build.gradle settings.gradle ./
-# Copy gradle wrapper if you use it (recommended)
-COPY gradlew .
-COPY gradle ./gradle
-
-# Download dependencies (this layer caches until dependencies change)
-# Using 'clean' effectively verifies the config without building full app
-RUN ./gradlew clean --no-daemon
-
-# Copy source code and build the bootJar
-COPY src ./src
-RUN ./gradlew bootJar --no-daemon
-
-# Stage 2: Create the runtime image
-FROM eclipse-temurin:21-jre-alpine
-
-# Install jq for the run.sh script
-RUN apk add --no-cache jq
+# We use the full JDK to build the project
+FROM eclipse-temurin:25-jdk AS builder
 
 WORKDIR /app
 
-# Copy the built jar. 
-# Note: Spring Boot Gradle plugin usually creates the jar in build/libs/
-# The wildcard *.jar ensures we pick it up regardless of version name
-COPY --from=builder /build/build/libs/*.jar app.jar
-COPY run.sh .
+# Copy gradle wrapper and configuration first to cache dependencies
+COPY gradlew .
+COPY gradle gradle
+COPY build.gradle.kts .
+COPY settings.gradle.kts . 
 
-RUN chmod +x run.sh
+# Make the wrapper executable and download dependencies
+# (Running 'build' here with no source will just download dependencies)
+RUN chmod +x gradlew
+RUN ./gradlew dependencies --no-daemon || return 0
 
+# Copy the actual source code
+COPY src src
+
+# Build the JAR, skipping tests to save time and avoid environment issues
+RUN ./gradlew bootJar -x test --no-daemon
+
+# Stage 2: Run the application
+# We use the JRE (Runtime Environment) for a smaller final image
+FROM eclipse-temurin:25-jre
+
+WORKDIR /app
+
+# Copy the built JAR from the builder stage
+# The jar is typically in build/libs/ and named after your project-version
+COPY --from=builder /app/build/libs/*.jar app.jar
+
+# Expose the port your Spring Boot app runs on (default 8080)
 EXPOSE 8080
 
-CMD [ "./run.sh" ]
+# Run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]

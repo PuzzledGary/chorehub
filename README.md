@@ -89,6 +89,49 @@ To run as a Home Assistant addon:
 - Test: `./gradlew test`
 - Run: `./gradlew bootRun`
 
+## Local Development with Podman
+
+### Building the Image
+
+Build the Docker image with a version tag:
+
+```bash
+cd chorehub
+podman build -t chorehub:dev -t chorehub:latest .
+```
+
+### Running the Container
+
+Run the container with host network access (required for connecting to MariaDB on your host):
+
+```bash
+podman run --rm --network host chorehub:dev
+
+Options:
+
+   --rm: Automatically removes the container when stopped
+
+   --network host: Shares the host's network stack (allows access to localhost:3306)
+```
+
+### Database Requirements
+
+The application requires a MariaDB instance running on your host machine. Ensure MariaDB is accessible at localhost:3306 with the credentials configured in src/main/resources/application.yaml.
+Versioning
+
+   chorehub:dev: Use for rapid development and testing
+
+   chorehub:1.0.0: Use specific versions for releases (should match version in config.yaml)
+
+   chorehub:latest: Always points to the most recent build
+
+To tag an existing image:
+
+```bash
+podman tag <IMAGE_ID> chorehub:1.0.0
+```
+
+
 ### Database
 
 The application uses Spring Data JPA for database operations. Entity classes and repositories will be added as features are implemented.
