@@ -1,0 +1,4 @@
+build_from:
+  aarch64: eclipse-temurin:25-jdk-alpine
+  amd64: eclipse-temurin:25-jdk-alpine
+  armv7: eclipse-temurin:25-jdk-alpine

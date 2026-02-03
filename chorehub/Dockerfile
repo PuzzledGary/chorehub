@@ -1,38 +1,52 @@
-# Stage 1: Build the application
-# We use the full JDK to build the project
-FROM eclipse-temurin:25-jdk AS builder
+# We use the argument defined by build.yaml
+ARG BUILD_FROM
+FROM $BUILD_FROM
 
+# Set shell to bash (optional but good for HA consistency)
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Setup work directory
 WORKDIR /app
 
-# Copy gradle wrapper and configuration first to cache dependencies
+# Copy necessary build files
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle.kts .
-COPY settings.gradle.kts . 
+COPY settings.gradle.kts .
 
-# Make the wrapper executable and download dependencies
-# (Running 'build' here with no source will just download dependencies)
+# Grant execution rights to the wrapper
 RUN chmod +x gradlew
+
+# Download dependencies (cache layer)
 RUN ./gradlew dependencies --no-daemon || return 0
 
-# Copy the actual source code
+# Copy source code
 COPY src src
 
-# Build the JAR, skipping tests to save time and avoid environment issues
+# Build the JAR
+# We skip tests to speed up the build in the add-on environment
 RUN ./gradlew bootJar -x test --no-daemon
 
-# Stage 2: Run the application
-# We use the JRE (Runtime Environment) for a smaller final image
-FROM eclipse-temurin:25-jre
+# --- Run Configuration ---
+# Move the built jar to a standard location
+RUN mv build/libs/*.jar app.jar
 
-WORKDIR /app
+# Clean up build files to reduce image size (Optional but recommended)
+# Note: In a single-stage build like this, layers persist, but this helps slightly.
+RUN rm -rf src gradle build.gradle gradlew
 
-# Copy the built JAR from the builder stage
-# The jar is typically in build/libs/ and named after your project-version
-COPY --from=builder /app/build/libs/*.jar app.jar
-
-# Expose the port your Spring Boot app runs on (default 8080)
+# Expose the port
 EXPOSE 8080
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Labels required by Home Assistant
+ARG BUILD_ARCH
+ARG BUILD_VERSION
+LABEL \
+    io.hass.name="ChoreHub" \
+    io.hass.description="Spring Boot backend to manage chores" \
+    io.hass.arch="${BUILD_ARCH}" \
+    io.hass.type="addon" \
+    io.hass.version="${BUILD_VERSION}"
+
+# Start the application
+CMD [ "java", "-jar", "/app/app.jar" ]
