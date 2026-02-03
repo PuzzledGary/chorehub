@@ -9,8 +9,8 @@ arch:
   - armv7
 startup: application
 boot: auto
-services:
-  # - mysql:require  # Ensures MariaDB is running before this starts
+# services:
+#   - mysql:require  # Ensures MariaDB is running before this starts
 ports:
   8080/tcp: 8080
 options:
