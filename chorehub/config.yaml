@@ -15,13 +15,17 @@ ports:
   8080/tcp: 8080
 options:
   db_host: "core-mariadb"
+  db_port: 3306
   db_name: "chorehub"
   db_user: "chorehub_user"
-  db_password: "changeme"
+  db_password: "CHANGE_ME"
+  server_port: 8080
   log_level: "info"
 schema:
   db_host: str
+  db_port: port
   db_name: str
   db_user: str
-  db_password: str
+  db_password: password
+  server_port: port
   log_level: list(info, debug, warn, error)

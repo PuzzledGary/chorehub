@@ -1,52 +1,35 @@
-# We use the argument defined by build.yaml
 ARG BUILD_FROM
-FROM $BUILD_FROM
+# --- Stage 1: Builder ---
+FROM gradle:8-jdk21-alpine AS builder
 
-# Set shell to bash (optional but good for HA consistency)
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-# Setup work directory
 WORKDIR /app
 
-# Copy necessary build files
-COPY gradlew .
+# 1. Pre-copy dependency files to cache the 'gradle' download layer
+COPY build.gradle.kts settings.gradle.kts ./
 COPY gradle gradle
-COPY build.gradle.kts .
-COPY settings.gradle.kts .
+COPY gradlew ./
 
-# Grant execution rights to the wrapper
-RUN chmod +x gradlew
+# Download dependencies
+RUN ./gradlew dependencies --no-daemon || true
 
-# Download dependencies (cache layer)
-RUN ./gradlew dependencies --no-daemon || return 0
-
-# Copy source code
+# 2. Copy source and build the JAR
 COPY src src
+RUN ./gradlew build --no-daemon -x test
 
-# Build the JAR
-# We skip tests to speed up the build in the add-on environment
-RUN ./gradlew bootJar -x test --no-daemon
+# --- Stage 2: Final Runtime ---
+FROM $BUILD_FROM
 
-# --- Run Configuration ---
-# Move the built jar to a standard location
-RUN mv build/libs/*.jar app.jar
+# 1. Install Java 21 JRE (Stable Alpine Repo)
+RUN apk add --no-cache openjdk21-jre-headless
 
-# Clean up build files to reduce image size (Optional but recommended)
-# Note: In a single-stage build like this, layers persist, but this helps slightly.
-RUN rm -rf src gradle build.gradle gradlew
+WORKDIR /app
 
-# Expose the port
-EXPOSE 8080
+# 2. Copy the compiled JAR
+# Spring Boot usually names the jar based on project name/version
+COPY --from=builder /app/build/libs/*.jar app.jar
 
-# Labels required by Home Assistant
-ARG BUILD_ARCH
-ARG BUILD_VERSION
-LABEL \
-    io.hass.name="ChoreHub" \
-    io.hass.description="Spring Boot backend to manage chores" \
-    io.hass.arch="${BUILD_ARCH}" \
-    io.hass.type="addon" \
-    io.hass.version="${BUILD_VERSION}"
+# 3. Startup script
+COPY run.sh /
+RUN chmod a+x /run.sh
 
-# Start the application
-CMD [ "java", "-jar", "/app/app.jar" ]
+CMD [ "/run.sh" ]
