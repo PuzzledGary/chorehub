@@ -1,14 +1,12 @@
 name: "ChoreHub"
-version: "0.1.3"
+version: "0.1.4"
 slug: "chorehub"
 description: "Smart household chore management with scheduling and history."
 url: "https://github.com/PuzzledGary/chorehub"
+image: "ghcr.io/PuzzledGary/{arch}-addon-chorehub"
 arch:
   - aarch64
-  - amd64
-  - armv7
-startup: application
-boot: auto
+init: false
 # services:
 #   - mysql:require  # Ensures MariaDB is running before this starts
 ports:
@@ -28,4 +26,4 @@ schema:
   db_user: str
   db_password: password
   server_port: port
-  log_level: list(info, debug, warn, error)
+  log_level: ["info", "debug", "warn", "error"]

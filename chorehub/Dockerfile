@@ -1,11 +1,35 @@
-ARG IMAGE=ghcr.io/<OWNER>/chorehub:latest
-FROM ${IMAGE}
+# Use Home Assistant build args
+ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest
+ARG BUILD_VERSION
+ARG BUILD_ARCH
 
-# Runtime wrapper: this Dockerfile pulls the pre-built image from GHCR
-# and starts it. Replace the default `IMAGE` build-arg when needed.
+FROM ${BUILD_FROM}
 
-EXPOSE 8080
+# Build arguments for labels
+ARG BUILD_VERSION
+ARG BUILD_ARCH
 
-# If the upstream image provides an entrypoint, the image will start
-# using that. Otherwise try the bundled run script if present.
-CMD [ "/run.sh" ]
+# Enable community repository and install Java 21 Runtime
+RUN apk add --no-cache openjdk21-jre --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+
+# Set working directory
+WORKDIR /app
+
+# Copy the Spring Boot JAR from Gradle build
+COPY build/libs/*.jar /app/app.jar
+
+# Copy config files for Home Assistant
+COPY config.yaml /app/config.yaml
+
+# Copy the run.sh script
+COPY run.sh /app/run.sh
+RUN chmod +x /app/run.sh
+
+# Home Assistant addon labels
+LABEL \
+    io.hass.version="${BUILD_VERSION}" \
+    io.hass.arch="${BUILD_ARCH}" \
+    io.hass.type="addon"
+
+# Set entrypoint (as required by HA addons)
+CMD ["/app/run.sh"]

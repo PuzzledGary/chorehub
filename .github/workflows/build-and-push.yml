@@ -1,61 +1,82 @@
-name: Build and publish ChoreHub image
+name: Build and Push Container
 
 on:
   push:
-    branches: [ main ]
-    tags: [ 'v*', 'release-*' ]
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+  release:
+    types: [published]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  packages: write
+env:
+  REGISTRY: ghcr.io
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     strategy:
       matrix:
-        include:
-          - platform: linux/arm64
-            build_from: ghcr.io/home-assistant/aarch64-base:latest
+        arch: [aarch64]  # Add more if needed: armhf, armv7, amd64, i386
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Ensure Gradle wrapper is executable
-        run: chmod +x ./gradlew
-
-      - name: Set up Java 21
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
           java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
 
-      - name: Build JAR (Gradle)
-        run: ./gradlew build -x test --no-daemon
+      - name: Build Spring Boot application
+        working-directory: ./chorehub
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean bootJar --no-daemon
 
-      - name: Set up QEMU (for buildx)
-        uses: docker/setup-qemu-action@v2
+      - name: Get addon version
+        id: version
+        run: |
+          VERSION=$(grep 'version:' chorehub/config.yaml | sed 's/version: *"\(.*\)"/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push addon image
+        uses: docker/build-push-action@v5
         with:
-          context: .
-          file: chorehub/Dockerfile.build
-          platforms: ${{ matrix.platform }}
+          context: ./chorehub
+          file: ./chorehub/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/chorehub:latest
-            ghcr.io/${{ github.repository_owner }}/chorehub:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.arch }}-addon-chorehub:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.arch }}-addon-chorehub:latest
           build-args: |
-            BUILD_FROM=${{ matrix.build_from }}
+            BUILD_FROM=ghcr.io/home-assistant/${{ matrix.arch }}-base:latest
+            BUILD_VERSION=${{ steps.version.outputs.version }}
+            BUILD_ARCH=${{ matrix.arch }}
+          labels: |
+            io.hass.version=${{ steps.version.outputs.version }}
+            io.hass.arch=${{ matrix.arch }}
+            io.hass.type=addon
+          platforms: linux/arm64
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
