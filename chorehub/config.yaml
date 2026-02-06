@@ -1,5 +1,5 @@
 name: "ChoreHub"
-version: "0.1.4"
+version: "0.1.5"
 slug: "chorehub"
 description: "Smart household chore management with scheduling and history."
 url: "https://github.com/PuzzledGary/chorehub"
@@ -26,4 +26,4 @@ schema:
   db_user: str
   db_password: password
   server_port: port
-  log_level: ["info", "debug", "warn", "error"]
+  log_level: list(info|debug|warn|error)
