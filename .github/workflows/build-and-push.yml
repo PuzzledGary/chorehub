@@ -67,8 +67,8 @@ jobs:
           file: ./chorehub/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.arch }}-addon-chorehub:${{ steps.version.outputs.version }}
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.arch }}-addon-chorehub:latest
+            ${{ env.REGISTRY }}/puzzledgary/${{ matrix.arch }}-addon-chorehub:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/puzzledgary/${{ matrix.arch }}-addon-chorehub:latest
           build-args: |
             BUILD_FROM=ghcr.io/home-assistant/${{ matrix.arch }}-base:latest
             BUILD_VERSION=${{ steps.version.outputs.version }}
