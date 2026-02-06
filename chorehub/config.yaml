@@ -1,9 +1,9 @@
 name: "ChoreHub"
-version: "0.1.5"
+version: "0.1.6"
 slug: "chorehub"
 description: "Smart household chore management with scheduling and history."
 url: "https://github.com/PuzzledGary/chorehub"
-image: "ghcr.io/PuzzledGary/{arch}-addon-chorehub"
+image: "ghcr.io/puzzledgary/{arch}-addon-chorehub"
 arch:
   - aarch64
 init: false
