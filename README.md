@@ -62,8 +62,44 @@ Future endpoints will include:
 - History retrieval
 
 ### Home Assistant Addon
-
+ Add authentication and authorization
 To run as a Home Assistant addon:
+## Using the GHCR image (Home Assistant / Raspberry Pi 4 aarch64)
+
+The GitHub Actions workflow builds the application and pushes a pre-built container image to GitHub Container Registry (GHCR).
+
+Pull and run the image locally (replace `<OWNER>` with your GitHub user or org):
+
+```bash
+docker pull ghcr.io/<OWNER>/chorehub:latest
+docker run --rm -p 8080:8080 ghcr.io/<OWNER>/chorehub:latest
+```
+
+On a Raspberry Pi 4 running Home Assistant OS (aarch64) the workflow builds an `aarch64` image, so HAOS will be able to pull and run the image without building on-device.
+
+### Minimal Home Assistant Add-on manifest (example)
+
+If you want to expose the pre-built image as an add-on, a minimal `manifest.json` could look like this (adjust fields as needed and replace `<OWNER>`):
+
+```json
+{
+   "name": "ChoreHub",
+   "version": "1.0",
+   "slug": "chorehub",
+   "arch": ["aarch64"],
+   "startup": "services",
+   "boot": "auto",
+   "map": ["config:rw"],
+   "options": {},
+   "schema": {},
+   "image": "ghcr.io/<OWNER>/chorehub:latest"
+}
+```
+
+Notes:
+- Replace `<OWNER>` with your GitHub username or organization.
+- The `image` key points to the pre-built image on GHCR so Home Assistant Supervisor does not have to build the addon locally.
+- If you need a 32-bit build (raspberrypi), the workflow must be extended to build `linux/arm/v7` as well.
 
 1. Create an addon configuration in your Home Assistant setup.
 2. Build the application as a JAR:

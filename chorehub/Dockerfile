@@ -1,35 +1,11 @@
-ARG BUILD_FROM
-# --- Stage 1: Builder ---
-FROM gradle:8-jdk21-alpine AS builder
+ARG IMAGE=ghcr.io/<OWNER>/chorehub:latest
+FROM ${IMAGE}
 
-WORKDIR /build
+# Runtime wrapper: this Dockerfile pulls the pre-built image from GHCR
+# and starts it. Replace the default `IMAGE` build-arg when needed.
 
-# 1. Pre-copy dependency files from parent directory
-COPY ../build.gradle.kts ../settings.gradle.kts ./
-COPY ../gradle ./gradle
-COPY ../gradlew ./
+EXPOSE 8080
 
-# Download dependencies
-RUN ./gradlew dependencies --no-daemon || true
-
-# 2. Copy source and build the JAR
-COPY ../src ./src
-RUN ./gradlew build --no-daemon -x test
-
-# --- Stage 2: Final Runtime ---
-FROM $BUILD_FROM
-
-# 1. Install Java 21 JRE (Stable Alpine Repo)
-RUN apk add --no-cache openjdk21-jre-headless netcat-openbsd
-
-WORKDIR /app
-
-# 2. Copy the compiled JAR
-# Spring Boot usually names the jar based on project name/version
-COPY --from=builder /build/build/libs/*.jar app.jar
-
-# 3. Startup script
-COPY run.sh /
-RUN chmod a+x /run.sh
-
+# If the upstream image provides an entrypoint, the image will start
+# using that. Otherwise try the bundled run script if present.
 CMD [ "/run.sh" ]
