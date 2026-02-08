@@ -15,4 +15,6 @@ public interface ChoreRepository extends JpaRepository<Chore, Long> {
 
     List<Chore> findByRecurrenceType(RecurrenceType recurrenceType);
 
+    List<Chore> findByUserId(Long userId);
+
 }

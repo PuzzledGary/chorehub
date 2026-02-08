@@ -3,8 +3,6 @@ package de.caransgar.chorehub.services;
 import de.caransgar.chorehub.entity.Chore;
 import de.caransgar.chorehub.entity.User;
 import de.caransgar.chorehub.repository.ChoreRepository;
-import de.caransgar.chorehub.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,18 +11,43 @@ import java.util.Optional;
 @Service
 public class ChoreService {
 
-    @Autowired
-    private ChoreRepository choreRepository;
+    private final ChoreRepository choreRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    public ChoreService(ChoreRepository choreRepository, UserService userService) {
+        this.choreRepository = choreRepository;
+    }
 
     public List<Chore> getAllChores() {
         return choreRepository.findAll();
     }
 
+    public List<Chore> getUsersChores(Long userId) {
+        return choreRepository.findByUserId(userId);
+    }
+
+    public List<Chore> getUsersChores(User user) {
+        return choreRepository.findByAssignedUser(user);
+    }
+
     public Optional<Chore> getChoreById(Long id) {
         return choreRepository.findById(id);
+    }
+
+    public Optional<Chore> markChoreAsDone(Long id) {
+        Optional<Chore> choreOptional = getChoreById(id);
+
+        if (choreOptional.isPresent()) {
+            markChoreAsDone(choreOptional.get());
+        }
+
+        return getChoreById(id);
+    }
+
+    public Chore markChoreAsDone(Chore chore) {
+        // TODO: Write History
+
+        chore.completeChore();
+        return saveChore(chore);
     }
 
     public Chore saveChore(Chore chore) {
@@ -37,22 +60,6 @@ public class ChoreService {
 
     public List<Chore> getChoresByUser(User user) {
         return choreRepository.findByAssignedUser(user);
-    }
-
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
-
-    public Optional<User> getUserById(Long id) {
-        return userRepository.findById(id);
-    }
-
-    public User saveUser(User user) {
-        return userRepository.save(user);
-    }
-
-    public void deleteUser(Long id) {
-        userRepository.deleteById(id);
     }
 
 }
