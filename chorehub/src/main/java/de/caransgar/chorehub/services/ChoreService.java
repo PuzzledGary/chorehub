@@ -1,4 +1,5 @@
 package de.caransgar.chorehub.services;
+
 import de.caransgar.chorehub.dto.ChoreDTO;
 
 import de.caransgar.chorehub.dto.CreateChoreRequest;
@@ -77,7 +78,26 @@ public class ChoreService {
 
         // Save and return
         Chore savedChore = choreRepository.save(chore);
-        return savedChore;
+        return choreToDTO(savedChore);
+    }
+
+    /**
+     * Converts a Chore entity to a ChoreDTO.
+     *
+     * @param chore the Chore entity to convert
+     * @return the corresponding ChoreDTO
+     */
+    private ChoreDTO choreToDTO(Chore chore) {
+        return new ChoreDTO(
+                chore.getId(),
+                chore.getName(),
+                chore.getDescription(),
+                chore.getRecurrenceType(),
+                chore.getRecurrencePattern(),
+                chore.getAssignedUser() != null ? chore.getAssignedUser().getName() : null,
+                chore.getCreatedDate(),
+                chore.getLastCompletedDate(),
+                chore.getNextDueDate());
     }
 
     /**
@@ -179,9 +199,8 @@ public class ChoreService {
     }
 
     public Chore markChoreAsDone(Chore chore) {
-        // TODO: Write History
-
-        chore.completeChore();
+        // Record the completion with history entry
+        chore.recordCompletion();
         return saveChore(chore);
     }
 

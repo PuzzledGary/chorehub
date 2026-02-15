@@ -16,6 +16,9 @@
 		"[java]": {
 			"editor.defaultFormatter": "redhat.java",
 			"editor.formatOnSave": true
+		},
+		"chat.tools.terminal.autoApprove": {
+			"./gradlew": true
 		}
 	},
 	"extensions": {

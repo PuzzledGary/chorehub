@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.scheduling.support.CronExpression;
 
@@ -38,10 +40,15 @@ public class Chore {
 
     private LocalDateTime nextDueDate;
 
-    // Constructors
-    public Chore() {}
+    @OneToMany(mappedBy = "chore", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ChoreHistory> history = new ArrayList<>();
 
-    public Chore(String name, String description, RecurrenceType recurrenceType, String recurrencePattern, User assignedUser) {
+    // Constructors
+    public Chore() {
+    }
+
+    public Chore(String name, String description, RecurrenceType recurrenceType, String recurrencePattern,
+            User assignedUser) {
         this.name = name;
         this.description = description;
         this.recurrenceType = recurrenceType;
@@ -52,19 +59,55 @@ public class Chore {
 
     public void completeChore() {
         this.lastCompletedDate = LocalDateTime.now();
-        
+
         if (this.recurrenceType == RecurrenceType.FIXED_SCHEDULE) {
             // Use Spring's CronExpression or Quartz
             var cron = CronExpression.parse(this.recurrencePattern);
-            // Next due date is based on CURRENT TIME, not the old due date, to avoid backlogs
+            // Next due date is based on CURRENT TIME, not the old due date, to avoid
+            // backlogs
             this.nextDueDate = cron.next(LocalDateTime.now());
-            
+
         } else if (this.recurrenceType == RecurrenceType.AFTER_COMPLETION) {
             // Use Java Standard Duration (e.g., "P7D")
             // "I cleaned it today, so remind me again in 7 days"
-            Duration interval = Duration.parse(this.recurrencePattern); 
+            Duration interval = Duration.parse(this.recurrencePattern);
             this.nextDueDate = this.lastCompletedDate.plus(interval);
         }
+    }
+
+    /**
+     * Records a chore completion by adding it to the history, updating the last
+     * completed date,
+     * and recalculating the next due date.
+     *
+     * @param notes Optional notes about the completion
+     */
+    public void recordCompletion(String notes) {
+        LocalDateTime completionTime = LocalDateTime.now();
+
+        // Add to history
+        ChoreHistory historyEntry = new ChoreHistory(this, completionTime, notes);
+        this.history.add(historyEntry);
+
+        // Update last completed date
+        this.lastCompletedDate = completionTime;
+
+        // Recalculate next due date based on recurrence type
+        if (this.recurrenceType == RecurrenceType.FIXED_SCHEDULE) {
+            var cron = CronExpression.parse(this.recurrencePattern);
+            this.nextDueDate = cron.next(LocalDateTime.now());
+        } else if (this.recurrenceType == RecurrenceType.AFTER_COMPLETION) {
+            Duration interval = Duration.parse(this.recurrencePattern);
+            this.nextDueDate = completionTime.plus(interval);
+        }
+        // ONETIME chores have no next due date
+    }
+
+    /**
+     * Records a chore completion without notes
+     */
+    public void recordCompletion() {
+        recordCompletion(null);
     }
 
     // Getters and Setters
@@ -138,6 +181,14 @@ public class Chore {
 
     public void setNextDueDate(LocalDateTime nextDueDate) {
         this.nextDueDate = nextDueDate;
+    }
+
+    public List<ChoreHistory> getHistory() {
+        return history;
+    }
+
+    public void setHistory(List<ChoreHistory> history) {
+        this.history = history;
     }
 
     @Override
