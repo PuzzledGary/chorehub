@@ -2,8 +2,10 @@ package de.caransgar.chorehub.controller;
 
 import de.caransgar.chorehub.dto.CreateChoreRequest;
 import de.caransgar.chorehub.entity.Chore;
+import de.caransgar.chorehub.entity.User;
 import de.caransgar.chorehub.dto.ChoreDTO;
 import de.caransgar.chorehub.services.ChoreService;
+import de.caransgar.chorehub.services.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,9 +15,11 @@ import org.springframework.web.bind.annotation.*;
 public class ChoreController {
 
     private final ChoreService choreService;
+    private final UserService userService;
 
-    public ChoreController(ChoreService choreService) {
+    public ChoreController(ChoreService choreService, UserService userService) {
         this.choreService = choreService;
+        this.userService = userService;
     }
 
     @GetMapping("/")
@@ -75,6 +79,60 @@ public class ChoreController {
     }
 
     /**
+     * Get all due or overdue chores.
+     * 
+     * Returns chores where nextDueDate is before tomorrow at 00:00.
+     *
+     * @return ResponseEntity with list of due ChoreDTO objects
+     */
+    @GetMapping("/due")
+    public ResponseEntity<?> getDueChores() {
+        try {
+            var dueChores = choreService.getDueChores();
+            var choresDTO = dueChores.stream()
+                    .map(this::toChoreDTO)
+                    .toList();
+            return ResponseEntity.ok(choresDTO);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("An unexpected error occurred: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get all due or overdue chores for a specific user.
+     * 
+     * Returns chores assigned to the specified user where nextDueDate is before
+     * tomorrow at 00:00.
+     *
+     * @param username the username of the assigned user
+     * @return ResponseEntity with list of due ChoreDTO objects for the user
+     */
+    @GetMapping("/due/user/{username}")
+    public ResponseEntity<?> getUserDueChores(@PathVariable String username) {
+        try {
+            User user = userService.getUserByName(username)
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "User with name '" + username + "' not found"));
+
+            var dueChores = choreService.getDueChores(user);
+            var choresDTO = dueChores.stream()
+                    .map(this::toChoreDTO)
+                    .toList();
+            return ResponseEntity.ok(choresDTO);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("An unexpected error occurred: " + e.getMessage()));
+        }
+    }
+
+    /**
      * Simple error response DTO for API responses.
      */
     public static class ErrorResponse {
@@ -93,4 +151,23 @@ public class ChoreController {
         }
     }
 
+    /**
+     * Converts a Chore entity to a ChoreDTO for API responses.
+     * 
+     * @param chore the Chore entity to convert
+     * @return the ChoreDTO
+     */
+    private ChoreDTO toChoreDTO(Chore chore) {
+        String assignedUsername = chore.getAssignedUser() != null ? chore.getAssignedUser().getName() : null;
+        return new ChoreDTO(
+                chore.getId(),
+                chore.getName(),
+                chore.getDescription(),
+                chore.getRecurrenceType(),
+                chore.getRecurrencePattern(),
+                assignedUsername,
+                chore.getCreatedDate(),
+                chore.getLastCompletedDate(),
+                chore.getNextDueDate());
+    }
 }

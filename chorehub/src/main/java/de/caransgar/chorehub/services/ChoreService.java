@@ -1,11 +1,12 @@
 package de.caransgar.chorehub.services;
+import de.caransgar.chorehub.dto.ChoreDTO;
 
 import de.caransgar.chorehub.dto.CreateChoreRequest;
-import de.caransgar.chorehub.dto.ChoreDTO;
 import de.caransgar.chorehub.entity.Chore;
-import de.caransgar.chorehub.entity.RecurrenceType;
 import de.caransgar.chorehub.entity.User;
 import de.caransgar.chorehub.repository.ChoreRepository;
+import de.caransgar.chorehub.utils.TimeUtils;
+
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,24 @@ public class ChoreService {
 
     public List<Chore> getAllChores() {
         return choreRepository.findAll();
+    }
+
+    /**
+     * Provides list of all chores with `nextDueDate` before "tomorrow at 00:00".
+     * 
+     * @return A list of all due or overdue chores
+     */
+    public List<Chore> getDueChores() {
+        return choreRepository.findByNextDueDateIsBefore(TimeUtils.getStartOfTomorrow());
+    }
+
+    /**
+     * Provides list of all chores with `nextDueDate` before "tomorrow at 00:00".
+     * 
+     * @return A list of all due or overdue chores
+     */
+    public List<Chore> getDueChores(User user) {
+        return choreRepository.findByNextDueDateIsBeforeAndAssignedUser(TimeUtils.getStartOfTomorrow(), user);
     }
 
     /**
@@ -58,7 +77,7 @@ public class ChoreService {
 
         // Save and return
         Chore savedChore = choreRepository.save(chore);
-        return toChoreDTO(savedChore);
+        return savedChore;
     }
 
     /**
@@ -139,30 +158,6 @@ public class ChoreService {
             throw new IllegalArgumentException(
                     "Invalid duration pattern: " + e.getMessage());
         }
-    }
-
-    /**
-     * Converts a Chore entity to a ChoreDTO for API responses.
-     * 
-     * @param chore the Chore entity to convert
-     * @return the ChoreDTO
-     */
-    public ChoreDTO toChoreDTO(Chore chore) {
-        String assignedUsername = chore.getAssignedUser() != null ? chore.getAssignedUser().getName() : null;
-        return new ChoreDTO(
-                chore.getId(),
-                chore.getName(),
-                chore.getDescription(),
-                chore.getRecurrenceType(),
-                chore.getRecurrencePattern(),
-                assignedUsername,
-                chore.getCreatedDate(),
-                chore.getLastCompletedDate(),
-                chore.getNextDueDate());
-    }
-
-    public List<Chore> getUsersChores(Long userId) {
-        return choreRepository.findByUserId(userId);
     }
 
     public List<Chore> getUsersChores(User user) {

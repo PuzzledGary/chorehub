@@ -1,0 +1,28 @@
+{
+	"folders": [
+		{
+			"path": ".",
+			"name": "chorehub-root"
+		},
+		{
+			"path": "chorehub",
+			"name": "chorehub-gradle"
+		}
+	],
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "automatic",
+		"java.compile.nullAnalysis.mode": "automatic",
+		"java.import.gradle.home": "${workspaceFolder:chorehub-gradle}",
+		"[java]": {
+			"editor.defaultFormatter": "redhat.java",
+			"editor.formatOnSave": true
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			"redhat.java",
+			"vscjava.vscode-spring-boot-dashboard",
+			"vscjava.vscode-maven"
+		]
+	}
+}
