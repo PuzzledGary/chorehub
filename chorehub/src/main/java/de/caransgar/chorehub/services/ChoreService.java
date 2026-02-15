@@ -189,13 +189,7 @@ public class ChoreService {
     }
 
     public Optional<Chore> markChoreAsDone(Long id) {
-        Optional<Chore> choreOptional = getChoreById(id);
-
-        if (choreOptional.isPresent()) {
-            markChoreAsDone(choreOptional.get());
-        }
-
-        return getChoreById(id);
+        return getChoreById(id).map(this::markChoreAsDone);
     }
 
     public Chore markChoreAsDone(Chore chore) {

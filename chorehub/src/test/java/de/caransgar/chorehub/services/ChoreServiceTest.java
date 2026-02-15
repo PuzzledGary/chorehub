@@ -367,7 +367,7 @@ class ChoreServiceTest {
         assertThat(dto.getId()).isPositive();
         assertThat(dto.getCreatedDate()).isNotNull();
         assertThat(dto.getLastCompletedDate()).isNull();
-        assertThat(dto.getNextDueDate()).isNull();
+        assertThat(dto.getNextDueDate()).isNotNull();
     }
 
     // ========== Edge Case Tests ==========
@@ -587,7 +587,7 @@ class ChoreServiceTest {
         choreRepository.save(chore2);
 
         Chore chore3 = new Chore("Task 3", "Future task", RecurrenceType.ONETIME, null, user);
-        chore3.setNextDueDate(java.time.LocalDateTime.now().plusHours(5));
+        chore3.setNextDueDate(java.time.LocalDateTime.now().plusDays(2));
         choreRepository.save(chore3);
 
         // When

@@ -27,7 +27,7 @@ class ChoreRepositoryTest {
     void testSaveAndFindChore() {
         // Given
         User user = userRepository.save(new User("Test User", "TU"));
-        Chore chore = new Chore("Clean Kitchen", "Weekly kitchen cleaning", RecurrenceType.AFTER_COMPLETION, "P1W", user);
+        Chore chore = new Chore("Clean Kitchen", "Weekly kitchen cleaning", RecurrenceType.AFTER_COMPLETION, "P7D", user);
 
         // When
         Chore savedChore = choreRepository.save(chore);
@@ -59,9 +59,9 @@ class ChoreRepositoryTest {
         // Given
         User user1 = userRepository.save(new User("User1", "U1"));
         User user2 = userRepository.save(new User("User2", "U2"));
-        Chore chore1 = new Chore("Mow Lawn", "Monthly lawn mowing", RecurrenceType.FIXED_SCHEDULE, "0 0 1 * *", user1);
-        Chore chore2 = new Chore("Vacuum", "Weekly vacuuming", RecurrenceType.AFTER_COMPLETION, "P1W", user1);
-        Chore chore3 = new Chore("Grocery Shopping", "Weekly shopping", RecurrenceType.AFTER_COMPLETION, "P1W", user2);
+        Chore chore1 = new Chore("Mow Lawn", "Monthly lawn mowing", RecurrenceType.FIXED_SCHEDULE, "0 0 0 1 * *", user1);
+        Chore chore2 = new Chore("Vacuum", "Weekly vacuuming", RecurrenceType.AFTER_COMPLETION, "P7D", user1);
+        Chore chore3 = new Chore("Grocery Shopping", "Weekly shopping", RecurrenceType.AFTER_COMPLETION, "P7D", user2);
         choreRepository.save(chore1);
         choreRepository.save(chore2);
         choreRepository.save(chore3);
@@ -79,8 +79,8 @@ class ChoreRepositoryTest {
         // Given
         User user1 = userRepository.save(new User("User1", "U1"));
         User user2 = userRepository.save(new User("User2", "U2"));
-        Chore chore1 = new Chore("Clean Bathroom", "Monthly cleaning", RecurrenceType.FIXED_SCHEDULE, "0 0 1 * *", user1);
-        Chore chore2 = new Chore("Take out trash", "Weekly task", RecurrenceType.AFTER_COMPLETION, "P1W", user1);
+        Chore chore1 = new Chore("Clean Bathroom", "Monthly cleaning", RecurrenceType.FIXED_SCHEDULE, "0 0 0 1 * *", user1);
+        Chore chore2 = new Chore("Take out trash", "Weekly task", RecurrenceType.AFTER_COMPLETION, "P7D", user1);
         Chore chore3 = new Chore("Fix sink", "One-time repair", RecurrenceType.ONETIME, null, user2);
         choreRepository.save(chore1);
         choreRepository.save(chore2);

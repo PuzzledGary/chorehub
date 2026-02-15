@@ -55,23 +55,24 @@ public class Chore {
         this.recurrencePattern = recurrencePattern;
         this.assignedUser = assignedUser;
         this.createdDate = LocalDateTime.now();
+        this.recalculateNextDueDate();
     }
 
-    public void completeChore() {
-        this.lastCompletedDate = LocalDateTime.now();
-
-        if (this.recurrenceType == RecurrenceType.FIXED_SCHEDULE) {
-            // Use Spring's CronExpression or Quartz
+    /**
+     * Recalculates the next due date based on the recurrence type and pattern.
+     * For FIXED_SCHEDULE, it uses the current time as reference.
+     * For AFTER_COMPLETION, it uses the last completed date (or created date if never completed).
+     */
+    public void recalculateNextDueDate() {
+        if (this.recurrenceType == RecurrenceType.FIXED_SCHEDULE && this.recurrencePattern != null) {
             var cron = CronExpression.parse(this.recurrencePattern);
-            // Next due date is based on CURRENT TIME, not the old due date, to avoid
-            // backlogs
             this.nextDueDate = cron.next(LocalDateTime.now());
-
-        } else if (this.recurrenceType == RecurrenceType.AFTER_COMPLETION) {
-            // Use Java Standard Duration (e.g., "P7D")
-            // "I cleaned it today, so remind me again in 7 days"
+        } else if (this.recurrenceType == RecurrenceType.AFTER_COMPLETION && this.recurrencePattern != null) {
             Duration interval = Duration.parse(this.recurrencePattern);
-            this.nextDueDate = this.lastCompletedDate.plus(interval);
+            LocalDateTime reference = (this.lastCompletedDate != null) ? this.lastCompletedDate : this.createdDate;
+            this.nextDueDate = reference.plus(interval);
+        } else {
+            this.nextDueDate = null;
         }
     }
 
@@ -92,15 +93,8 @@ public class Chore {
         // Update last completed date
         this.lastCompletedDate = completionTime;
 
-        // Recalculate next due date based on recurrence type
-        if (this.recurrenceType == RecurrenceType.FIXED_SCHEDULE) {
-            var cron = CronExpression.parse(this.recurrencePattern);
-            this.nextDueDate = cron.next(LocalDateTime.now());
-        } else if (this.recurrenceType == RecurrenceType.AFTER_COMPLETION) {
-            Duration interval = Duration.parse(this.recurrencePattern);
-            this.nextDueDate = completionTime.plus(interval);
-        }
-        // ONETIME chores have no next due date
+        // Recalculate next due date
+        this.recalculateNextDueDate();
     }
 
     /**
