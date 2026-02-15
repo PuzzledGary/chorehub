@@ -19,7 +19,9 @@
 		},
 		"chat.tools.terminal.autoApprove": {
 			"./gradlew": true
-		}
+		},
+		"java.dependency.packagePresentation": "hierarchical",
+		"java.project.explorer.showNonJavaResources": false
 	},
 	"extensions": {
 		"recommendations": [
