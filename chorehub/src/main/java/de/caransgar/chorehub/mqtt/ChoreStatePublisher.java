@@ -1,6 +1,7 @@
 package de.caransgar.chorehub.mqtt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import de.caransgar.chorehub.dto.ChoreAttributes;
 import de.caransgar.chorehub.entity.Chore;
 import de.caransgar.chorehub.entity.ChoreStatus;
@@ -20,10 +21,12 @@ public class ChoreStatePublisher {
     private static final Logger LOG = LoggerFactory.getLogger(ChoreStatePublisher.class);
 
     private final MqttGateway mqttGateway;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     public ChoreStatePublisher(MqttGateway mqttGateway) {
         this.mqttGateway = mqttGateway;
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.registerModule(new JavaTimeModule());
     }
 
     /**

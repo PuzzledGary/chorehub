@@ -56,3 +56,9 @@ http --json POST "$BASE_URL" \
   recurrencePattern="P3D"
   
 printf "\nDone. Review responses above to get created chore IDs.\n"
+http --json POST "$BASE_URL" \
+  name="Test Me" \
+  description="This is a test chore for reset actions. Press me" \
+  recurrenceType="AFTER_COMPLETION" \
+  recurrencePattern="P1D" \
+  assignedUsername:=null
