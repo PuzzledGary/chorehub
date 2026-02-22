@@ -8,7 +8,17 @@ import de.caransgar.chorehub.services.ChoreService;
 import de.caransgar.chorehub.services.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/chores")
@@ -22,9 +32,13 @@ public class ChoreController {
         this.userService = userService;
     }
 
-    @GetMapping("/")
-    public String getMethodName() {
-        return "ChoreHub is running.";
+    @GetMapping
+    public ResponseEntity<?> getAllChores() {
+        var chores = choreService.getAllChores();
+        var choresDTO = chores.stream()
+                .map(this::toChoreDTO)
+                .toList();
+        return ResponseEntity.ok(choresDTO);
     }
 
     /**
@@ -46,7 +60,7 @@ public class ChoreController {
                         .body(new ErrorResponse("Request body cannot be null"));
             }
 
-            if (request.getName() == null) {
+            if (request.getName() == null || request.getName().isBlank()) {
                 return ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
                         .body(new ErrorResponse("Chore name is required"));
@@ -74,6 +88,23 @@ public class ChoreController {
             // Unexpected errors
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("An unexpected error occurred: " + e.getMessage()));
+        }
+    }
+
+
+    @PostMapping("/{choreId}/done")
+    public ResponseEntity<?> choreDone(@PathVariable Long choreId) {
+        try {
+            Optional<Chore> updated = choreService.markChoreAsDone(choreId);
+            return updated
+                    .map(ch -> ResponseEntity.ok(toChoreDTO(ch)))
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ErrorResponse("Chore with id '" + choreId + "' not found")));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("An unexpected error occurred: " + e.getMessage()));
         }
     }
@@ -128,6 +159,69 @@ public class ChoreController {
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("An unexpected error occurred: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getChoreById(@PathVariable Long id) {
+        try {
+            return choreService.getChoreById(id)
+                    .map(ch -> ResponseEntity.ok(toChoreDTO(ch)))
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ErrorResponse("Chore with id '" + id + "' not found")));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("An unexpected error occurred: " + e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateChore(@PathVariable Long id, @RequestBody CreateChoreRequest request) {
+        try {
+            Chore chore = choreService.getChoreById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Chore with id '" + id + "' not found"));
+
+            if (request.getName() != null && !request.getName().isBlank()) {
+                chore.setName(request.getName());
+            }
+            if (request.getDescription() != null) {
+                chore.setDescription(request.getDescription());
+            }
+            if (request.getRecurrenceType() != null) {
+                chore.setRecurrenceType(request.getRecurrenceType());
+            }
+            if (request.getRecurrencePattern() != null) {
+                chore.setRecurrencePattern(request.getRecurrencePattern());
+            }
+            if (request.getAssignedUsername() != null) {
+                User assigned = userService.getUserByName(request.getAssignedUsername())
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "User with name '" + request.getAssignedUsername() + "' not found"));
+                chore.setAssignedUser(assigned);
+            }
+
+            Chore saved = choreService.saveChore(chore);
+            return ResponseEntity.ok(toChoreDTO(saved));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("An unexpected error occurred: " + e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteChore(@PathVariable Long id) {
+        try {
+            choreService.getChoreById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Chore with id '" + id + "' not found"));
+            choreService.deleteChore(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("An unexpected error occurred: " + e.getMessage()));
         }
     }
