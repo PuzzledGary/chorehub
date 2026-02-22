@@ -1,0 +1,236 @@
+openapi: 3.0.3
+info:
+  title: ChoreHub API
+  version: "1.0.0"
+  description: API surface for Chore management (generated from ChoreController)
+servers:
+  - url: /
+paths:
+  /chores:
+    get:
+      tags: [Chores]
+      summary: List all chores
+      responses:
+        '200':
+          description: A JSON array of ChoreDTO
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChoreDTO'
+    post:
+      tags: [Chores]
+      summary: Create a new chore
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChoreRequest'
+      responses:
+        '201':
+          description: Created chore
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChoreDTO'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /chores/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: [Chores]
+      summary: Get chore by id
+      responses:
+        '200':
+          description: Chore found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChoreDTO'
+        '404':
+          description: Chore not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Chores]
+      summary: Update an existing chore (partial/upsert style)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChoreRequest'
+      responses:
+        '200':
+          description: Updated chore
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChoreDTO'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Chore not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Chores]
+      summary: Delete a chore
+      responses:
+        '204':
+          description: Deleted successfully (no content)
+        '404':
+          description: Chore not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /chores/{choreId}/done:
+    parameters:
+      - name: choreId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    post:
+      tags: [Chores]
+      summary: Mark a chore as completed
+      responses:
+        '200':
+          description: Chore marked as done
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChoreDTO'
+        '404':
+          description: Chore not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /chores/due:
+    get:
+      tags: [Chores]
+      summary: List all due or overdue chores
+      responses:
+        '200':
+          description: A JSON array of due chores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChoreDTO'
+
+  /chores/due/user/{username}:
+    parameters:
+      - name: username
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Chores]
+      summary: List due chores for a specific user
+      responses:
+        '200':
+          description: A JSON array of due chores assigned to the user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChoreDTO'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    CreateChoreRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        recurrenceType:
+          $ref: '#/components/schemas/RecurrenceType'
+        recurrencePattern:
+          type: string
+        assignedUsername:
+          type: string
+      required: [name, recurrenceType]
+
+    ChoreDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        recurrenceType:
+          $ref: '#/components/schemas/RecurrenceType'
+        recurrencePattern:
+          type: string
+        assignedUsername:
+          type: string
+          nullable: true
+        createdDate:
+          type: string
+          format: date-time
+        lastCompletedDate:
+          type: string
+          format: date-time
+          nullable: true
+        nextDueDate:
+          type: string
+          format: date-time
+      required: [id, name, recurrenceType]
+
+    RecurrenceType:
+      type: string
+      enum: [FIXED_SCHEDULE, AFTER_COMPLETION, ONETIME]
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+  securitySchemes: {}
+
+tags:
+  - name: Chores
+    description: Operations related to chore management
