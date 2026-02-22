@@ -5,9 +5,13 @@ import de.caransgar.chorehub.dto.ChoreDTO;
 import de.caransgar.chorehub.dto.CreateChoreRequest;
 import de.caransgar.chorehub.entity.Chore;
 import de.caransgar.chorehub.entity.User;
+import de.caransgar.chorehub.mqtt.ChoreDiscoveryService;
+import de.caransgar.chorehub.mqtt.ChoreStatePublisher;
 import de.caransgar.chorehub.repository.ChoreRepository;
 import de.caransgar.chorehub.utils.TimeUtils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 
@@ -18,12 +22,19 @@ import java.util.Optional;
 @Service
 public class ChoreService {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ChoreService.class);
+
     private final ChoreRepository choreRepository;
     private final UserService userService;
+    private final ChoreDiscoveryService discoveryService;
+    private final ChoreStatePublisher statePublisher;
 
-    public ChoreService(ChoreRepository choreRepository, UserService userService) {
+    public ChoreService(ChoreRepository choreRepository, UserService userService,
+                        ChoreDiscoveryService discoveryService, ChoreStatePublisher statePublisher) {
         this.choreRepository = choreRepository;
         this.userService = userService;
+        this.discoveryService = discoveryService;
+        this.statePublisher = statePublisher;
     }
 
     public List<Chore> getAllChores() {
@@ -51,6 +62,7 @@ public class ChoreService {
     /**
      * Creates a new chore with business logic validation.
      * Validates recurrence patterns, user existence, and chore parameters.
+     * Publishes MQTT discovery and state after creation.
      *
      * @param request the CreateChoreRequest containing chore details
      * @return the created ChoreDTO
@@ -78,6 +90,15 @@ public class ChoreService {
 
         // Save and return
         Chore savedChore = choreRepository.save(chore);
+
+        // Publish MQTT discovery and state
+        try {
+            discoveryService.publishDiscoveryForChore(savedChore);
+            statePublisher.publishStatusAndAttributes(savedChore);
+        } catch (Exception e) {
+            LOG.error("Failed to publish MQTT for chore {}", savedChore.getId(), e);
+        }
+
         return choreToDTO(savedChore);
     }
 
@@ -195,7 +216,16 @@ public class ChoreService {
     public Chore markChoreAsDone(Chore chore) {
         // Record the completion with history entry
         chore.recordCompletion();
-        return saveChore(chore);
+        Chore saved = saveChore(chore);
+
+        // Publish updated MQTT state
+        try {
+            statePublisher.publishStatusAndAttributes(saved);
+        } catch (Exception e) {
+            LOG.error("Failed to publish MQTT state for chore {}", saved.getId(), e);
+        }
+
+        return saved;
     }
 
     public Chore saveChore(Chore chore) {
@@ -203,6 +233,11 @@ public class ChoreService {
     }
 
     public void deleteChore(Long id) {
+        try {
+            discoveryService.removeDiscoveryForChore(id);
+        } catch (Exception e) {
+            LOG.error("Failed to remove MQTT discovery for chore {}", id, e);
+        }
         choreRepository.deleteById(id);
     }
 

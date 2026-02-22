@@ -97,10 +97,12 @@ public class ChoreController {
     public ResponseEntity<?> choreDone(@PathVariable Long choreId) {
         try {
             Optional<Chore> updated = choreService.markChoreAsDone(choreId);
-            return updated
-                    .map(ch -> ResponseEntity.ok(toChoreDTO(ch)))
-                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(new ErrorResponse("Chore with id '" + choreId + "' not found")));
+            if (updated.isPresent()) {
+                return ResponseEntity.ok(toChoreDTO(updated.get()));
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ErrorResponse("Chore with id '" + choreId + "' not found"));
+            }
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(e.getMessage()));
         } catch (Exception e) {
@@ -166,10 +168,13 @@ public class ChoreController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getChoreById(@PathVariable Long id) {
         try {
-            return choreService.getChoreById(id)
-                    .map(ch -> ResponseEntity.ok(toChoreDTO(ch)))
-                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(new ErrorResponse("Chore with id '" + id + "' not found")));
+            Optional<Chore> chore = choreService.getChoreById(id);
+            if (chore.isPresent()) {
+                return ResponseEntity.ok(toChoreDTO(chore.get()));
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ErrorResponse("Chore with id '" + id + "' not found"));
+            }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("An unexpected error occurred: " + e.getMessage()));

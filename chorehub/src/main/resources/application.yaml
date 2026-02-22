@@ -1,6 +1,7 @@
 spring:
   application:
-    name: chorehub  datasource:
+    name: chorehub
+  datasource:
     url: jdbc:mariadb://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:chorehub}?createDatabaseIfNotExist=true
     username: ${DB_USER:chorehub}
     password: ${DB_PASSWORD:password}
@@ -13,3 +14,16 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect
         format_sql: true
+
+# ChoreHub MQTT Configuration
+chorehub:
+  mqtt:
+    broker-url: ${MQTT_BROKER_URL:tcp://localhost:1883}
+    username: ${MQTT_USERNAME:chorehub}
+    password: ${MQTT_PASSWORD:chorehub}
+    client-id-prefix: ${MQTT_CLIENT_ID:chorehub}
+
+logging:
+  level:
+    de.caransgar.chorehub: INFO
+    de.caransgar.chorehub.mqtt: DEBUG
