@@ -1,5 +1,5 @@
 name: "ChoreHub"
-version: "0.2.6"
+version: "0.2.7"
 slug: "chorehub"
 description: "Smart household chore management with scheduling and history."
 url: "https://github.com/PuzzledGary/chorehub"

@@ -40,7 +40,8 @@ public class BackofficeController {
     private final UserService userService;
     private final BackofficeConfigProperties backofficeConfigProperties;
 
-    public BackofficeController(RestTemplate restTemplate, UserService userService, BackofficeConfigProperties backofficeConfigProperties) {
+    public BackofficeController(RestTemplate restTemplate, UserService userService,
+            BackofficeConfigProperties backofficeConfigProperties) {
         this.restTemplate = restTemplate;
         this.userService = userService;
         this.backofficeConfigProperties = backofficeConfigProperties;
@@ -55,17 +56,18 @@ public class BackofficeController {
     public String dashboard(Model model) {
         try {
             // Fetch chores from REST API
-            ResponseEntity<ChoreDTO[]> response = restTemplate.getForEntity(backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT, ChoreDTO[].class);
-            List<ChoreDTO> chores = response.getStatusCode() == HttpStatus.OK 
-                ? Arrays.asList(response.getBody() != null ? response.getBody() : new ChoreDTO[0])
-                : List.of();
-            
+            ResponseEntity<ChoreDTO[]> response = restTemplate
+                    .getForEntity(backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT, ChoreDTO[].class);
+            List<ChoreDTO> chores = response.getStatusCode() == HttpStatus.OK
+                    ? Arrays.asList(response.getBody() != null ? response.getBody() : new ChoreDTO[0])
+                    : List.of();
+
             List<User> users = userService.getAllUsers();
-            
+
             model.addAttribute("chores", chores);
             model.addAttribute("users", users);
             model.addAttribute("recurrenceTypes", RecurrenceType.values());
-            
+
             return "backoffice/dashboard";
         } catch (Exception e) {
             LOG.error("Error loading dashboard: {}", e.getMessage());
@@ -82,11 +84,13 @@ public class BackofficeController {
     @GetMapping("/chores/new")
     public String showCreateChoreForm(Model model) {
         List<User> users = userService.getAllUsers();
-        
+
         model.addAttribute("users", users);
         model.addAttribute("recurrenceTypes", RecurrenceType.values());
         model.addAttribute("chore", new CreateChoreRequest());
-        
+        model.addAttribute("actionUrl", "/chorehub-ui/chores");
+        model.addAttribute("isEdit", false);
+
         return "backoffice/chore-form";
     }
 
@@ -96,19 +100,21 @@ public class BackofficeController {
     @GetMapping("/chores/{id}/edit")
     public String showEditChoreForm(@PathVariable Long id, Model model) {
         try {
-            ResponseEntity<ChoreDTO> response = restTemplate.getForEntity(backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT + "/" + id, ChoreDTO.class);
+            ResponseEntity<ChoreDTO> response = restTemplate
+                    .getForEntity(backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT + "/" + id, ChoreDTO.class);
             if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
                 LOG.warn("Chore not found: {}", id);
                 return "redirect:/chorehub-ui";
             }
-            
+
             List<User> users = userService.getAllUsers();
-            
+
             model.addAttribute("chore", response.getBody());
             model.addAttribute("users", users);
             model.addAttribute("recurrenceTypes", RecurrenceType.values());
+            model.addAttribute("actionUrl", "/chorehub-ui/chores/" + id);
             model.addAttribute("isEdit", true);
-            
+
             return "backoffice/chore-form";
         } catch (HttpClientErrorException.NotFound e) {
             LOG.warn("Chore not found: {}", id);
@@ -124,9 +130,10 @@ public class BackofficeController {
      */
     @PostMapping("/chores")
     public String createChore(@ModelAttribute("chore") CreateChoreRequest request,
-                             RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
-            ResponseEntity<ChoreDTO> response = restTemplate.postForEntity(backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT, request, ChoreDTO.class);
+            ResponseEntity<ChoreDTO> response = restTemplate
+                    .postForEntity(backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT, request, ChoreDTO.class);
             if (response.getStatusCode() == HttpStatus.CREATED) {
                 redirectAttributes.addFlashAttribute("successMessage", "Chore created successfully");
                 return "redirect:/chorehub-ui";
@@ -151,15 +158,16 @@ public class BackofficeController {
      */
     @PostMapping("/chores/{id}")
     public String updateChore(@PathVariable Long id,
-                             @ModelAttribute("chore") CreateChoreRequest request,
-                             RedirectAttributes redirectAttributes) {
+            @ModelAttribute("chore") CreateChoreRequest request,
+            RedirectAttributes redirectAttributes) {
         try {
             restTemplate.put(backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT + "/" + id, request);
             redirectAttributes.addFlashAttribute("successMessage", "Chore updated successfully");
             return "redirect:/chorehub-ui";
         } catch (HttpClientErrorException e) {
             LOG.error("Error updating chore {}: {}", id, e.getMessage());
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating chore: " + e.getResponseBodyAsString());
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Error updating chore: " + e.getResponseBodyAsString());
             return "redirect:/chorehub-ui/chores/" + id + "/edit";
         } catch (Exception e) {
             LOG.error("Unexpected error updating chore {}: {}", id, e.getMessage());
@@ -178,7 +186,8 @@ public class BackofficeController {
             redirectAttributes.addFlashAttribute("successMessage", "Chore deleted successfully");
         } catch (HttpClientErrorException e) {
             LOG.error("Error deleting chore {}: {}", id, e.getMessage());
-            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting chore: " + e.getResponseBodyAsString());
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Error deleting chore: " + e.getResponseBodyAsString());
         } catch (Exception e) {
             LOG.error("Unexpected error deleting chore {}: {}", id, e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", "Unexpected error: " + e.getMessage());
@@ -191,15 +200,14 @@ public class BackofficeController {
      */
     @PostMapping("/chores/{id}/complete")
     public String completeChore(@PathVariable Long id,
-                               @RequestParam(required = false) String notes,
-                               RedirectAttributes redirectAttributes) {
+            @RequestParam(required = false) String notes,
+            RedirectAttributes redirectAttributes) {
         try {
             // Call the REST API endpoint to mark chore as done
             ResponseEntity<ChoreDTO> response = restTemplate.postForEntity(
-                backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT + "/" + id + "/done", 
-                null, 
-                ChoreDTO.class
-            );
+                    backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT + "/" + id + "/done",
+                    null,
+                    ChoreDTO.class);
             if (response.getStatusCode() == HttpStatus.OK) {
                 redirectAttributes.addFlashAttribute("successMessage", "Chore marked as completed");
             } else {
@@ -207,7 +215,8 @@ public class BackofficeController {
             }
         } catch (HttpClientErrorException e) {
             LOG.error("Error completing chore {}: {}", id, e.getMessage());
-            redirectAttributes.addFlashAttribute("errorMessage", "Error completing chore: " + e.getResponseBodyAsString());
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Error completing chore: " + e.getResponseBodyAsString());
         } catch (Exception e) {
             LOG.error("Unexpected error completing chore {}: {}", id, e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", "Unexpected error: " + e.getMessage());
@@ -223,6 +232,8 @@ public class BackofficeController {
     @GetMapping("/users/new")
     public String showCreateUserForm(Model model) {
         model.addAttribute("user", new User());
+        model.addAttribute("actionUrl", "/chorehub-ui/users");
+        model.addAttribute("isEdit", false);
         return "backoffice/user-form";
     }
 
@@ -236,10 +247,11 @@ public class BackofficeController {
             LOG.warn("User not found: {}", id);
             return "redirect:/chorehub-ui";
         }
-        
+
         model.addAttribute("user", user.get());
+        model.addAttribute("actionUrl", "/chorehub-ui/users/" + id);
         model.addAttribute("isEdit", true);
-        
+
         return "backoffice/user-form";
     }
 
@@ -264,7 +276,7 @@ public class BackofficeController {
      */
     @PostMapping("/users/{id}")
     public String updateUser(@PathVariable Long id, @ModelAttribute User user,
-                            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
             user.setId(id);
             userService.saveUser(user);
@@ -292,4 +304,3 @@ public class BackofficeController {
         return "redirect:/chorehub-ui";
     }
 }
-

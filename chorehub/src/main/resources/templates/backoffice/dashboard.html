@@ -1,10 +1,25 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChoreHub Backoffice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,304 +27,357 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
+            font-family: 'Outfit', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         header {
-            background-color: #2c3e50;
-            color: white;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         header h1 {
             font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
         }
 
         nav {
-            background-color: #34495e;
-            padding: 10px 20px;
+            display: flex;
+            gap: 15px;
         }
 
         nav a {
-            color: white;
+            color: var(--text-main);
             text-decoration: none;
-            margin-right: 15px;
-            padding: 8px 12px;
-            border-radius: 4px;
-            transition: background-color 0.3s;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         nav a:hover {
-            background-color: #2c3e50;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
 
         .container {
             max-width: 1200px;
-            margin: 20px auto;
+            margin: 40px auto;
             padding: 0 20px;
+            width: 100%;
+            flex: 1;
         }
 
         .alerts {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .alert {
-            padding: 12px 16px;
-            border-radius: 4px;
-            margin-bottom: 10px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .alert-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
         .sections {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: 1fr;
+            gap: 30px;
         }
 
         .section {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 15px;
         }
 
         .section h2 {
-            margin-bottom: 15px;
-            color: #2c3e50;
-            font-size: 20px;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
+            color: var(--text-main);
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .add-btn {
-            display: inline-block;
-            background-color: #27ae60;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, var(--accent-primary), #6366f1);
             color: white;
-            padding: 10px 15px;
-            border-radius: 4px;
+            padding: 8px 16px;
+            border-radius: 10px;
             text-decoration: none;
-            margin-bottom: 15px;
-            transition: background-color 0.3s;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            border: none;
         }
 
         .add-btn:hover {
-            background-color: #229954;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
         }
 
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             margin-top: 10px;
         }
 
         th {
-            background-color: #ecf0f1;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: var(--text-muted);
             text-align: left;
-            padding: 10px;
+            padding: 12px 16px;
             font-weight: 600;
-            border-bottom: 2px solid #bdc3c7;
+            border-bottom: 1px solid var(--border-color);
         }
 
         td {
-            padding: 10px;
-            border-bottom: 1px solid #ecf0f1;
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 15px;
+            vertical-align: middle;
         }
 
-        tr:hover {
-            background-color: #f9f9f9;
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.03);
         }
 
         .action-buttons {
             display: flex;
             gap: 8px;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        tr:hover .action-buttons {
+            opacity: 1;
         }
 
         .btn {
-            padding: 6px 12px;
+            padding: 8px 12px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
             text-decoration: none;
-            font-size: 12px;
-            transition: all 0.3s;
-            display: inline-block;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-edit {
-            background-color: #3498db;
-            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
         }
 
         .btn-edit:hover {
-            background-color: #2980b9;
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
         }
 
         .btn-delete {
-            background-color: #e74c3c;
-            color: white;
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
         }
 
         .btn-delete:hover {
-            background-color: #c0392b;
+            background: var(--danger);
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
         }
 
         .btn-complete {
-            background-color: #f39c12;
-            color: white;
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
         }
 
         .btn-complete:hover {
-            background-color: #d68910;
-        }
-
-        .btn-small {
-            padding: 4px 8px;
-            font-size: 11px;
+            background: var(--success);
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
         }
 
         .due-label {
             display: inline-block;
-            padding: 4px 8px;
-            border-radius: 3px;
-            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
             font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+            border: 1px solid transparent;
         }
 
         .due-overdue {
-            background-color: #e74c3c;
-            color: white;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.3);
         }
 
         .due-today {
-            background-color: #f39c12;
-            color: white;
+            background: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+            border-color: rgba(245, 158, 11, 0.3);
         }
 
         .due-future {
-            background-color: #27ae60;
-            color: white;
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+            border-color: rgba(16, 185, 129, 0.3);
         }
 
         .no-data {
             text-align: center;
-            padding: 20px;
-            color: #7f8c8d;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
         }
 
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.4);
-        }
-
-        .modal.show {
-            display: block;
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 500px;
-            border-radius: 8px;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .modal-header h2 {
-            margin: 0;
-        }
-
-        .close-btn {
-            font-size: 28px;
-            font-weight: bold;
-            color: #aaa;
-            cursor: pointer;
-            border: none;
-            background: none;
-        }
-
-        .close-btn:hover {
-            color: #000;
-        }
-
-        .modal-body form {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .modal-body label {
-            margin-top: 10px;
+        .no-data a {
+            color: var(--accent-primary);
+            text-decoration: none;
             font-weight: 600;
         }
 
-        .modal-body textarea {
-            resize: vertical;
-            min-height: 60px;
+        .no-data a:hover {
+            text-decoration: underline;
         }
 
-        .modal-footer {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
 
-        @media (max-width: 768px) {
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @media (max-width: 900px) {
             .sections {
                 grid-template-columns: 1fr;
             }
 
-            table {
-                font-size: 14px;
-            }
-
-            td, th {
-                padding: 8px;
-            }
-
-            .action-buttons {
-                flex-wrap: wrap;
+            header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px 20px;
             }
         }
     </style>
 </head>
+
 <body>
     <header>
         <h1>🏠 ChoreHub Backoffice</h1>
     </header>
 
-    <nav>
-        <a href="/chorehub-ui" title="Dashboard">Dashboard</a>
-        <a href="/chorehub-ui/chores/new" title="Create Chore">+ New Chore</a>
-        <a href="/chorehub-ui/users/new" title="Create User">+ New User</a>
-    </nav>
+    <div
+        style="background: rgba(15, 23, 42, 0.8); padding: 15px 40px; border-bottom: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(10px);">
+        <nav>
+            <a href="/chorehub-ui" title="Dashboard">Dashboard</a>
+            <a href="/chorehub-ui/chores/new" title="Create Chore">+ New Chore</a>
+            <a href="/chorehub-ui/users/new" title="Create User">+ New User</a>
+        </nav>
+    </div>
 
     <div class="container">
         <!-- Alerts -->
@@ -323,8 +391,10 @@
         <div class="sections">
             <!-- Chores Section -->
             <div class="section">
-                <h2>📋 Chores</h2>
-                <a href="/chorehub-ui/chores/new" class="add-btn">+ Add New Chore</a>
+                <div class="section-header">
+                    <h2>📋 Chores</h2>
+                    <a href="/chorehub-ui/chores/new" class="add-btn">+ Add New Chore</a>
+                </div>
 
                 <div th:if="${chores.isEmpty()}" class="no-data">
                     No chores yet. <a href="/chorehub-ui/chores/new">Create one now</a>
@@ -343,15 +413,17 @@
                     <tbody>
                         <tr th:each="chore : ${chores}">
                             <td th:text="${chore.name}"></td>
-                            <td th:text="${chore.assignedUsername != null ? chore.assignedUsername : 'Unassigned'}"></td>
+                            <td th:text="${chore.assignedUsername != null ? chore.assignedUsername : 'Unassigned'}">
+                            </td>
                             <td th:text="${chore.recurrenceType}"></td>
                             <td>
                                 <span th:if="${chore.nextDueDate != null}">
                                     <span th:text="${#temporals.format(chore.nextDueDate, 'dd.MM.yyyy HH:mm')}"></span>
+                                    <br />
                                     <span th:if="${chore.nextDueDate != null}"
-                                          th:class="${chore.nextDueDate.isBefore(T(java.time.LocalDateTime).now()) ? 'due-label due-overdue' : 
+                                        th:class="${chore.nextDueDate.isBefore(T(java.time.LocalDateTime).now()) ? 'due-label due-overdue' : 
                                                      (chore.nextDueDate.isBefore(T(java.time.LocalDateTime).now().plusDays(1).withHour(0).withMinute(0)) ? 'due-label due-today' : 'due-label due-future')}"
-                                          th:text="${chore.nextDueDate.isBefore(T(java.time.LocalDateTime).now()) ? 'Overdue' : 
+                                        th:text="${chore.nextDueDate.isBefore(T(java.time.LocalDateTime).now()) ? 'Overdue' : 
                                                    (chore.nextDueDate.isBefore(T(java.time.LocalDateTime).now().plusDays(1).withHour(0).withMinute(0)) ? 'Today' : 'Upcoming')}">
                                     </span>
                                 </span>
@@ -359,12 +431,17 @@
                             </td>
                             <td>
                                 <div class="action-buttons">
-                                    <form method="post" th:action="@{/chorehub-ui/chores/{id}/complete(id=${chore.id})}" style="display: inline;">
-                                        <button type="submit" class="btn btn-complete btn-small" onclick="return confirm('Mark as completed?')">✓ Done</button>
+                                    <form method="post" th:action="@{/chorehub-ui/chores/{id}/complete(id=${chore.id})}"
+                                        style="display: inline;">
+                                        <button type="submit" class="btn btn-complete"
+                                            onclick="return confirm('Mark as completed?')">✓ Done</button>
                                     </form>
-                                    <a th:href="@{/chorehub-ui/chores/{id}/edit(id=${chore.id})}" class="btn btn-edit btn-small">Edit</a>
-                                    <form method="post" th:action="@{/chorehub-ui/chores/{id}/delete(id=${chore.id})}" style="display: inline;">
-                                        <button type="submit" class="btn btn-delete btn-small" onclick="return confirm('Delete this chore?')">Delete</button>
+                                    <a th:href="@{/chorehub-ui/chores/{id}/edit(id=${chore.id})}"
+                                        class="btn btn-edit">Edit</a>
+                                    <form method="post" th:action="@{/chorehub-ui/chores/{id}/delete(id=${chore.id})}"
+                                        style="display: inline;">
+                                        <button type="submit" class="btn btn-delete"
+                                            onclick="return confirm('Delete this chore?')">Delete</button>
                                     </form>
                                 </div>
                             </td>
@@ -375,8 +452,10 @@
 
             <!-- Users Section -->
             <div class="section">
-                <h2>👥 Users</h2>
-                <a href="/chorehub-ui/users/new" class="add-btn">+ Add New User</a>
+                <div class="section-header">
+                    <h2>👥 Users</h2>
+                    <a href="/chorehub-ui/users/new" class="add-btn">+ Add New User</a>
+                </div>
 
                 <div th:if="${users.isEmpty()}" class="no-data">
                     No users yet. <a href="/chorehub-ui/users/new">Create one now</a>
@@ -398,9 +477,12 @@
                             <td th:text="${user.chores != null ? user.chores.size() : 0}"></td>
                             <td>
                                 <div class="action-buttons">
-                                    <a th:href="@{/chorehub-ui/users/{id}/edit(id=${user.id})}" class="btn btn-edit btn-small">Edit</a>
-                                    <form method="post" th:action="@{/chorehub-ui/users/{id}/delete(id=${user.id})}" style="display: inline;">
-                                        <button type="submit" class="btn btn-delete btn-small" onclick="return confirm('Delete this user?')">Delete</button>
+                                    <a th:href="@{/chorehub-ui/users/{id}/edit(id=${user.id})}"
+                                        class="btn btn-edit">Edit</a>
+                                    <form method="post" th:action="@{/chorehub-ui/users/{id}/delete(id=${user.id})}"
+                                        style="display: inline;">
+                                        <button type="submit" class="btn btn-delete"
+                                            onclick="return confirm('Delete this user?')">Delete</button>
                                     </form>
                                 </div>
                             </td>
@@ -412,18 +494,20 @@
     </div>
 
     <script>
-        // Auto-hide alerts after 5 seconds
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {
                 setTimeout(() => {
                     alert.style.opacity = '0';
+                    alert.style.filter = 'blur(4px)';
+                    alert.style.transition = 'all 0.4s ease';
                     setTimeout(() => {
                         alert.style.display = 'none';
-                    }, 300);
+                    }, 400);
                 }, 5000);
             });
         });
     </script>
 </body>
+
 </html>
