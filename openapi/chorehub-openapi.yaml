@@ -185,8 +185,18 @@ components:
           $ref: '#/components/schemas/RecurrenceType'
         recurrencePattern:
           type: string
+          nullable: true
+          description: |
+            Schedule pattern depending on recurrenceType:
+            - FIXED_SCHEDULE: 6-field cron expression (second minute hour day month day-of-week), e.g. "0 0 8 ? * MON" (every Monday at 08:00)
+            - AFTER_COMPLETION: ISO 8601 duration, e.g. "P7D" (7 days after completion) or "P1M" (1 month)
+            - ONETIME: null or omitted (not used for one-time chores)
         assignedUsername:
           type: string
+          nullable: true
+          description: |
+            Username of the user this chore is assigned to.
+            Must exist in the database. Optional; if not provided, chore is unassigned.
       required: [name, recurrenceType]
 
     ChoreDTO:
