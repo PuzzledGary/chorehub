@@ -343,7 +343,7 @@
                     <tbody>
                         <tr th:each="chore : ${chores}">
                             <td th:text="${chore.name}"></td>
-                            <td th:text="${chore.assignedUser != null ? chore.assignedUser.name : 'Unassigned'}"></td>
+                            <td th:text="${chore.assignedUsername != null ? chore.assignedUsername : 'Unassigned'}"></td>
                             <td th:text="${chore.recurrenceType}"></td>
                             <td>
                                 <span th:if="${chore.nextDueDate != null}">
