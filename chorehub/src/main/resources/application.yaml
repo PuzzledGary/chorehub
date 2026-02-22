@@ -26,4 +26,14 @@ chorehub:
 logging:
   level:
     de.caransgar.chorehub: INFO
-    de.caransgar.chorehub.mqtt: DEBUG
+    de.caransgar.chorehub.mqtt: INFO
+
+# Spring Boot Actuator - expose application info
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info, health
+  endpoint:
+    info:
+      enabled: true

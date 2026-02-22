@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChoreHub Backoffice</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 28px;
+        }
+
+        nav {
+            background-color: #34495e;
+            padding: 10px 20px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-right: 15px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        nav a:hover {
+            background-color: #2c3e50;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .alerts {
+            margin-bottom: 20px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .section h2 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-size: 20px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .add-btn {
+            display: inline-block;
+            background-color: #27ae60;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: background-color 0.3s;
+        }
+
+        .add-btn:hover {
+            background-color: #229954;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            background-color: #ecf0f1;
+            text-align: left;
+            padding: 10px;
+            font-weight: 600;
+            border-bottom: 2px solid #bdc3c7;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 12px;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .btn-edit {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-delete {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-complete {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .btn-complete:hover {
+            background-color: #d68910;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .due-label {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .due-overdue {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .due-today {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .due-future {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal.show {
+            display: block;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+        }
+
+        .close-btn {
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        .close-btn:hover {
+            color: #000;
+        }
+
+        .modal-body form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-body label {
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .modal-body textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .sections {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            td, th {
+                padding: 8px;
+            }
+
+            .action-buttons {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🏠 ChoreHub Backoffice</h1>
+    </header>
+
+    <nav>
+        <a href="/chorehub-ui" title="Dashboard">Dashboard</a>
+        <a href="/chorehub-ui/chores/new" title="Create Chore">+ New Chore</a>
+        <a href="/chorehub-ui/users/new" title="Create User">+ New User</a>
+    </nav>
+
+    <div class="container">
+        <!-- Alerts -->
+        <div class="alerts" th:if="${successMessage}">
+            <div class="alert alert-success" th:text="${successMessage}"></div>
+        </div>
+        <div class="alerts" th:if="${errorMessage}">
+            <div class="alert alert-error" th:text="${errorMessage}"></div>
+        </div>
+
+        <div class="sections">
+            <!-- Chores Section -->
+            <div class="section">
+                <h2>📋 Chores</h2>
+                <a href="/chorehub-ui/chores/new" class="add-btn">+ Add New Chore</a>
+
+                <div th:if="${chores.isEmpty()}" class="no-data">
+                    No chores yet. <a href="/chorehub-ui/chores/new">Create one now</a>
+                </div>
+
+                <table th:if="${!chores.isEmpty()}">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Assigned To</th>
+                            <th>Type</th>
+                            <th>Next Due</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="chore : ${chores}">
+                            <td th:text="${chore.name}"></td>
+                            <td th:text="${chore.assignedUser != null ? chore.assignedUser.name : 'Unassigned'}"></td>
+                            <td th:text="${chore.recurrenceType}"></td>
+                            <td>
+                                <span th:if="${chore.nextDueDate != null}">
+                                    <span th:text="${#temporals.format(chore.nextDueDate, 'dd.MM.yyyy HH:mm')}"></span>
+                                    <span th:if="${chore.nextDueDate != null}"
+                                          th:class="${chore.nextDueDate.isBefore(T(java.time.LocalDateTime).now()) ? 'due-label due-overdue' : 
+                                                     (chore.nextDueDate.isBefore(T(java.time.LocalDateTime).now().plusDays(1).withHour(0).withMinute(0)) ? 'due-label due-today' : 'due-label due-future')}"
+                                          th:text="${chore.nextDueDate.isBefore(T(java.time.LocalDateTime).now()) ? 'Overdue' : 
+                                                   (chore.nextDueDate.isBefore(T(java.time.LocalDateTime).now().plusDays(1).withHour(0).withMinute(0)) ? 'Today' : 'Upcoming')}">
+                                    </span>
+                                </span>
+                                <span th:if="${chore.nextDueDate == null}">Not scheduled</span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <form method="post" th:action="@{/chorehub-ui/chores/{id}/complete(id=${chore.id})}" style="display: inline;">
+                                        <button type="submit" class="btn btn-complete btn-small" onclick="return confirm('Mark as completed?')">✓ Done</button>
+                                    </form>
+                                    <a th:href="@{/chorehub-ui/chores/{id}/edit(id=${chore.id})}" class="btn btn-edit btn-small">Edit</a>
+                                    <form method="post" th:action="@{/chorehub-ui/chores/{id}/delete(id=${chore.id})}" style="display: inline;">
+                                        <button type="submit" class="btn btn-delete btn-small" onclick="return confirm('Delete this chore?')">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Users Section -->
+            <div class="section">
+                <h2>👥 Users</h2>
+                <a href="/chorehub-ui/users/new" class="add-btn">+ Add New User</a>
+
+                <div th:if="${users.isEmpty()}" class="no-data">
+                    No users yet. <a href="/chorehub-ui/users/new">Create one now</a>
+                </div>
+
+                <table th:if="${!users.isEmpty()}">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Shortname</th>
+                            <th>Chores</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="user : ${users}">
+                            <td th:text="${user.name}"></td>
+                            <td th:text="${user.shortname != null ? user.shortname : '-'}"></td>
+                            <td th:text="${user.chores != null ? user.chores.size() : 0}"></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a th:href="@{/chorehub-ui/users/{id}/edit(id=${user.id})}" class="btn btn-edit btn-small">Edit</a>
+                                    <form method="post" th:action="@{/chorehub-ui/users/{id}/delete(id=${user.id})}" style="display: inline;">
+                                        <button type="submit" class="btn btn-delete btn-small" onclick="return confirm('Delete this user?')">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-hide alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.opacity = '0';
+                    setTimeout(() => {
+                        alert.style.display = 'none';
+                    }, 300);
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html>
