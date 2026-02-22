@@ -15,8 +15,10 @@ spring:
         dialect: org.hibernate.dialect.MariaDBDialect
         format_sql: true
 
-# ChoreHub MQTT Configuration
+# ChoreHub Configuration
 chorehub:
+  backoffice:
+    base-url: ${BACKOFFICE_BASE_URL:http://homeassistant:8080}
   mqtt:
     broker-url: ${MQTT_BROKER_URL:tcp://core-mosquitto:1883}
     username: ${MQTT_USERNAME:}

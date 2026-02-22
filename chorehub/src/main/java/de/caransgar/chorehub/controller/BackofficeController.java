@@ -1,5 +1,6 @@
 package de.caransgar.chorehub.controller;
 
+import de.caransgar.chorehub.config.BackofficeConfigProperties;
 import de.caransgar.chorehub.dto.CreateChoreRequest;
 import de.caransgar.chorehub.dto.ChoreDTO;
 import de.caransgar.chorehub.entity.Chore;
@@ -33,15 +34,16 @@ import java.util.Optional;
 public class BackofficeController {
 
     private static final Logger LOG = LoggerFactory.getLogger(BackofficeController.class);
-    private static final String BASE_URL = "http://localhost:8080";
-    private static final String CHORES_API = BASE_URL + "/chores";
+    private static final String CHORES_ENDPOINT = "/chores";
 
     private final RestTemplate restTemplate;
     private final UserService userService;
+    private final BackofficeConfigProperties backofficeConfigProperties;
 
-    public BackofficeController(RestTemplate restTemplate, UserService userService) {
+    public BackofficeController(RestTemplate restTemplate, UserService userService, BackofficeConfigProperties backofficeConfigProperties) {
         this.restTemplate = restTemplate;
         this.userService = userService;
+        this.backofficeConfigProperties = backofficeConfigProperties;
     }
 
     // ==================== Dashboard ====================
@@ -53,7 +55,7 @@ public class BackofficeController {
     public String dashboard(Model model) {
         try {
             // Fetch chores from REST API
-            ResponseEntity<ChoreDTO[]> response = restTemplate.getForEntity(CHORES_API, ChoreDTO[].class);
+            ResponseEntity<ChoreDTO[]> response = restTemplate.getForEntity(backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT, ChoreDTO[].class);
             List<ChoreDTO> chores = response.getStatusCode() == HttpStatus.OK 
                 ? Arrays.asList(response.getBody() != null ? response.getBody() : new ChoreDTO[0])
                 : List.of();
@@ -94,7 +96,7 @@ public class BackofficeController {
     @GetMapping("/chores/{id}/edit")
     public String showEditChoreForm(@PathVariable Long id, Model model) {
         try {
-            ResponseEntity<ChoreDTO> response = restTemplate.getForEntity(CHORES_API + "/" + id, ChoreDTO.class);
+            ResponseEntity<ChoreDTO> response = restTemplate.getForEntity(backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT + "/" + id, ChoreDTO.class);
             if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
                 LOG.warn("Chore not found: {}", id);
                 return "redirect:/chorehub-ui";
@@ -124,7 +126,7 @@ public class BackofficeController {
     public String createChore(@ModelAttribute("chore") CreateChoreRequest request,
                              RedirectAttributes redirectAttributes) {
         try {
-            ResponseEntity<ChoreDTO> response = restTemplate.postForEntity(CHORES_API, request, ChoreDTO.class);
+            ResponseEntity<ChoreDTO> response = restTemplate.postForEntity(backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT, request, ChoreDTO.class);
             if (response.getStatusCode() == HttpStatus.CREATED) {
                 redirectAttributes.addFlashAttribute("successMessage", "Chore created successfully");
                 return "redirect:/chorehub-ui";
@@ -152,7 +154,7 @@ public class BackofficeController {
                              @ModelAttribute("chore") CreateChoreRequest request,
                              RedirectAttributes redirectAttributes) {
         try {
-            restTemplate.put(CHORES_API + "/" + id, request);
+            restTemplate.put(backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT + "/" + id, request);
             redirectAttributes.addFlashAttribute("successMessage", "Chore updated successfully");
             return "redirect:/chorehub-ui";
         } catch (HttpClientErrorException e) {
@@ -172,7 +174,7 @@ public class BackofficeController {
     @PostMapping("/chores/{id}/delete")
     public String deleteChore(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
-            restTemplate.delete(CHORES_API + "/" + id);
+            restTemplate.delete(backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT + "/" + id);
             redirectAttributes.addFlashAttribute("successMessage", "Chore deleted successfully");
         } catch (HttpClientErrorException e) {
             LOG.error("Error deleting chore {}: {}", id, e.getMessage());
@@ -194,7 +196,7 @@ public class BackofficeController {
         try {
             // Call the REST API endpoint to mark chore as done
             ResponseEntity<ChoreDTO> response = restTemplate.postForEntity(
-                CHORES_API + "/" + id + "/done", 
+                backofficeConfigProperties.getBaseUrl() + CHORES_ENDPOINT + "/" + id + "/done", 
                 null, 
                 ChoreDTO.class
             );

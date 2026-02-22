@@ -1,5 +1,5 @@
 name: "ChoreHub"
-version: "0.2.3"
+version: "0.2.4"
 slug: "chorehub"
 description: "Smart household chore management with scheduling and history."
 url: "https://github.com/PuzzledGary/chorehub"
@@ -20,6 +20,7 @@ options:
   db_password: "CHANGE_ME"
   server_port: 8080
   log_level: "info"
+  backoffice_base_url: "http://homeassistant:8080"
   mqtt_broker: "core-mosquitto"
   mqtt_port: 1883
   mqtt_username: ""
@@ -33,6 +34,7 @@ schema:
   db_password: password
   server_port: port
   log_level: list(info|debug|warn|error)
+  backoffice_base_url: str
   mqtt_broker: str
   mqtt_port: port
   mqtt_username: str
