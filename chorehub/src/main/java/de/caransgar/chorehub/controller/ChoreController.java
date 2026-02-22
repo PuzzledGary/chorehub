@@ -60,10 +60,16 @@ public class ChoreController {
                         .body(new ErrorResponse("Request body cannot be null"));
             }
 
-            if (request.getName() == null || request.getName().isBlank()) {
+            if (request.getName() == null) {
                 return ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
                         .body(new ErrorResponse("Chore name is required"));
+            }
+
+            if (request.getName().isBlank()) {
+                return ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body(new ErrorResponse("Chore name cannot be empty"));
             }
 
             if (request.getRecurrenceType() == null) {
