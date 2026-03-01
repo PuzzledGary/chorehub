@@ -34,6 +34,7 @@ public class MqttCommandHandler {
             String topic = resolveTopic(message);
             String payload = message.getPayload().toString();
 
+            LOG.info("MQTT inbound message received: topic='{}', payload='{}'", topic, payload);
             LOG.debug("Received MQTT command on topic: {} with payload: {}", topic, payload);
 
             if (topic == null) {
@@ -53,9 +54,10 @@ public class MqttCommandHandler {
             }
 
             Long choreId = Long.parseLong(parts[2]);
+            LOG.info("MQTT done command parsed successfully for choreId={}", choreId);
             handleMarkChoreDone(choreId);
         } catch (NumberFormatException e) {
-            LOG.error("Failed to parse choreId from topic", e);
+            LOG.error("Failed to parse choreId from MQTT topic", e);
         } catch (Exception e) {
             LOG.error("Error handling MQTT command", e);
         }
@@ -64,11 +66,16 @@ public class MqttCommandHandler {
     private String resolveTopic(Message<?> message) {
         String topic = message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC, String.class);
         if (topic != null) {
+            LOG.debug("Resolved MQTT topic from header '{}'", MqttHeaders.RECEIVED_TOPIC);
             return topic;
         }
 
         // Backward compatibility for header naming differences across integration versions.
-        return message.getHeaders().get("mqtt_topic", String.class);
+        String legacyTopic = message.getHeaders().get("mqtt_topic", String.class);
+        if (legacyTopic != null) {
+            LOG.debug("Resolved MQTT topic from legacy header 'mqtt_topic'");
+        }
+        return legacyTopic;
     }
 
     /**
