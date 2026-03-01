@@ -16,4 +16,12 @@ public interface MqttGateway {
      * @param topic the MQTT topic to publish to
      */
     void sendToMqtt(String payload, @Header("mqtt_topic") String topic);
+
+    /**
+     * Send a message to an MQTT topic with explicit retained flag.
+     * @param payload the message payload
+     * @param topic the MQTT topic to publish to
+     * @param retained whether the message should be retained by the broker
+     */
+    void sendToMqtt(String payload, @Header("mqtt_topic") String topic, @Header("mqtt_retained") boolean retained);
 }

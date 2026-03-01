@@ -16,11 +16,14 @@ import org.springframework.stereotype.Service;
 public class MqttCommandHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(MqttCommandHandler.class);
+    private static final String STARTUP_SELF_TEST_PAYLOAD_PREFIX = "__chorehub_startup_selftest__:";
 
     private final ChoreService choreService;
+    private final MqttInboundSelfTestState selfTestState;
 
-    public MqttCommandHandler(ChoreService choreService) {
+    public MqttCommandHandler(ChoreService choreService, MqttInboundSelfTestState selfTestState) {
         this.choreService = choreService;
+        this.selfTestState = selfTestState;
     }
 
     /**
@@ -55,6 +58,17 @@ public class MqttCommandHandler {
 
             Long choreId = Long.parseLong(parts[2]);
             LOG.info("MQTT done command parsed successfully for choreId={}", choreId);
+
+            if (choreId == 0L && payload.startsWith(STARTUP_SELF_TEST_PAYLOAD_PREFIX)) {
+                String token = payload.substring(STARTUP_SELF_TEST_PAYLOAD_PREFIX.length());
+                if (selfTestState.complete(token)) {
+                    LOG.info("MQTT inbound self-test received successfully (token={})", token);
+                } else {
+                    LOG.warn("Received MQTT inbound self-test token that was not pending (token={})", token);
+                }
+                return;
+            }
+
             handleMarkChoreDone(choreId);
         } catch (NumberFormatException e) {
             LOG.error("Failed to parse choreId from MQTT topic", e);

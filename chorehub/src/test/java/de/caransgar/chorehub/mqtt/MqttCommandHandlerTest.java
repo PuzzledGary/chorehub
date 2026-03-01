@@ -27,7 +27,7 @@ class MqttCommandHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new MqttCommandHandler(choreService);
+        handler = new MqttCommandHandler(choreService, new MqttInboundSelfTestState());
     }
 
     @Test

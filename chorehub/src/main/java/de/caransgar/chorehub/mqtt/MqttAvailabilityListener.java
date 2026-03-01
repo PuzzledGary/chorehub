@@ -6,6 +6,10 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Listener for application startup and shutdown events.
  * Manages MQTT availability status across the app lifecycle.
@@ -14,13 +18,20 @@ import org.springframework.stereotype.Component;
 public class MqttAvailabilityListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(MqttAvailabilityListener.class);
+    private static final String STARTUP_SELF_TEST_PAYLOAD_PREFIX = "__chorehub_startup_selftest__:";
+    private static final long STARTUP_SELF_TEST_TIMEOUT_SECONDS = 10;
 
     private final MqttGateway mqttGateway;
     private final ChoreDiscoveryService discoveryService;
+    private final MqttInboundSelfTestState selfTestState;
 
-    public MqttAvailabilityListener(MqttGateway mqttGateway, ChoreDiscoveryService discoveryService) {
+    public MqttAvailabilityListener(
+            MqttGateway mqttGateway,
+            ChoreDiscoveryService discoveryService,
+            MqttInboundSelfTestState selfTestState) {
         this.mqttGateway = mqttGateway;
         this.discoveryService = discoveryService;
+        this.selfTestState = selfTestState;
     }
 
     /**
@@ -36,6 +47,8 @@ public class MqttAvailabilityListener {
             // Publish online status
             publishAvailability("online");
             LOG.info("ChoreHub MQTT availability published as ONLINE");
+
+            publishStartupSelfTest();
         } catch (Exception e) {
             LOG.error("Failed to publish availability on startup", e);
         }
@@ -50,6 +63,33 @@ public class MqttAvailabilityListener {
             mqttGateway.sendToMqtt(status, ChoreMqttTopics.availabilityTopic());
         } catch (Exception e) {
             LOG.error("Failed to publish availability status: {}", status, e);
+        }
+    }
+
+    /**
+     * Publish a non-retained self-test command to verify inbound subscription path.
+     * If the subscriber is healthy, MqttCommandHandler will log that the self-test was received.
+     */
+    private void publishStartupSelfTest() {
+        try {
+            String selfTestTopic = ChoreMqttTopics.doneCommandTopic(0L);
+            String token = UUID.randomUUID().toString();
+            String payload = STARTUP_SELF_TEST_PAYLOAD_PREFIX + token;
+
+            selfTestState.begin(token);
+            mqttGateway.sendToMqtt(payload, selfTestTopic, false);
+            LOG.info("Published MQTT startup self-test command to topic '{}' (token={})", selfTestTopic, token);
+
+            CompletableFuture.delayedExecutor(STARTUP_SELF_TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS).execute(() -> {
+                if (selfTestState.isPending(token)) {
+                    LOG.warn(
+                            "MQTT inbound self-test was not received within {}s. Check broker ACL/subscribe permissions for topic '{}'",
+                            STARTUP_SELF_TEST_TIMEOUT_SECONDS,
+                            selfTestTopic);
+                }
+            });
+        } catch (Exception e) {
+            LOG.error("Failed to publish MQTT startup self-test command", e);
         }
     }
 
