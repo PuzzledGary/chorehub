@@ -1,6 +1,9 @@
 package de.caransgar.chorehub.services;
 
+import de.caransgar.chorehub.entity.Chore;
+import de.caransgar.chorehub.entity.RecurrenceType;
 import de.caransgar.chorehub.entity.User;
+import de.caransgar.chorehub.repository.ChoreRepository;
 import de.caransgar.chorehub.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,8 +25,12 @@ class UserServiceTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ChoreRepository choreRepository;
+
     @BeforeEach
     void setUp() {
+        choreRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -77,6 +84,39 @@ class UserServiceTest {
 
         // Then - Should not find (case sensitive)
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void testDeleteUserSoftDeletesInsteadOfHardDeleting() {
+        User saved = userRepository.save(new User("To Delete", "TD"));
+
+        userService.deleteUser(saved.getId());
+
+        Optional<User> rawUser = userRepository.findById(saved.getId());
+        Optional<User> activeUser = userService.getUserById(saved.getId());
+        assertThat(rawUser).isPresent();
+        assertThat(rawUser.get().isDeleted()).isTrue();
+        assertThat(rawUser.get().getDeletedAt()).isNotNull();
+        assertThat(activeUser).isEmpty();
+    }
+
+    @Test
+    void testCleanupDeletedUsersUnassignsChoresAndDeletesUser() {
+        User user = userRepository.save(new User("Cleanup User", "CU"));
+        Chore chore = new Chore("Cleanup Chore", "desc", RecurrenceType.ONETIME, null, user);
+        choreRepository.save(chore);
+
+        userService.deleteUser(user.getId());
+        UserService.CleanupDeletedUsersResult result = userService.cleanupDeletedUsers();
+
+        Optional<User> deletedUser = userRepository.findById(user.getId());
+        Optional<Chore> updatedChore = choreRepository.findById(chore.getId());
+        assertThat(result.deletedUsersFound()).isEqualTo(1);
+        assertThat(result.choresUnassigned()).isEqualTo(1);
+        assertThat(result.usersDeleted()).isEqualTo(1);
+        assertThat(deletedUser).isEmpty();
+        assertThat(updatedChore).isPresent();
+        assertThat(updatedChore.get().getAssignedUser()).isNull();
     }
 
 }

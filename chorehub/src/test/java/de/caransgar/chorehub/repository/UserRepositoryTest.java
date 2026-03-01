@@ -53,7 +53,7 @@ class UserRepositoryTest {
         userRepository.save(user);
 
         // When
-        Optional<User> foundUser = userRepository.findByName("Alice");
+        Optional<User> foundUser = userRepository.findByNameAndDeletedFalse("Alice");
 
         // Then
         assertThat(foundUser).isPresent();
@@ -67,7 +67,7 @@ class UserRepositoryTest {
         userRepository.save(user);
 
         // When
-        Optional<User> foundUser = userRepository.findByShortname("Bobby");
+        Optional<User> foundUser = userRepository.findByShortnameAndDeletedFalse("Bobby");
 
         // Then
         assertThat(foundUser).isPresent();
@@ -81,10 +81,14 @@ class UserRepositoryTest {
         User savedUser = userRepository.save(user);
 
         // When
-        userRepository.deleteById(savedUser.getId());
+        savedUser.setDeleted(true);
+        userRepository.save(savedUser);
 
-        // Then
-        Optional<User> deletedUser = userRepository.findById(savedUser.getId());
-        assertThat(deletedUser).isNotPresent();
+        // Then - hidden from active queries but still present in DB
+        Optional<User> activeLookup = userRepository.findByIdAndDeletedFalse(savedUser.getId());
+        Optional<User> persisted = userRepository.findById(savedUser.getId());
+        assertThat(activeLookup).isNotPresent();
+        assertThat(persisted).isPresent();
+        assertThat(persisted.get().isDeleted()).isTrue();
     }
 }

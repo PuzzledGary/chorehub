@@ -1,6 +1,7 @@
 package de.caransgar.chorehub.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -16,7 +17,12 @@ public class User {
 
     private String shortname;
 
-    @OneToMany(mappedBy = "assignedUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Column(nullable = false)
+    private boolean deleted = false;
+
+    private LocalDateTime deletedAt;
+
+    @OneToMany(mappedBy = "assignedUser", fetch = FetchType.LAZY)
     private List<Chore> chores;
 
     // Constructors
@@ -52,6 +58,22 @@ public class User {
         this.shortname = shortname;
     }
 
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
     public List<Chore> getChores() {
         return chores;
     }
@@ -66,6 +88,7 @@ public class User {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", shortname='" + shortname + '\'' +
+                ", deleted=" + deleted +
                 '}';
     }
 }

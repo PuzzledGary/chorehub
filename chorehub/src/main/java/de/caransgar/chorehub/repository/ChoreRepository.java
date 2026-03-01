@@ -20,4 +20,6 @@ public interface ChoreRepository extends JpaRepository<Chore, Long> {
 
     List<Chore> findByNextDueDateIsBeforeAndAssignedUser(LocalDateTime referenceDate, User assignedUser);
 
+    long countByAssignedUser(User assignedUser);
+
 }
