@@ -18,11 +18,9 @@ public class MqttCommandHandler {
     private static final Logger LOG = LoggerFactory.getLogger(MqttCommandHandler.class);
 
     private final ChoreService choreService;
-    private final ChoreStatePublisher statePublisher;
 
-    public MqttCommandHandler(ChoreService choreService, ChoreStatePublisher statePublisher) {
+    public MqttCommandHandler(ChoreService choreService) {
         this.choreService = choreService;
-        this.statePublisher = statePublisher;
     }
 
     /**
@@ -80,10 +78,7 @@ public class MqttCommandHandler {
     private void handleMarkChoreDone(Long choreId) {
         choreService.markChoreAsDone(choreId)
                 .ifPresentOrElse(
-                        chore -> {
-                            LOG.info("Marked chore {} as done via MQTT", choreId);
-                            statePublisher.publishStatusAndAttributes(chore);
-                        },
+                        chore -> LOG.info("Marked chore {} as done via MQTT", choreId),
                         () -> LOG.warn("Chore {} not found", choreId)
                 );
     }

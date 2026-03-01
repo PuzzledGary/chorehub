@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class ChoreStatusScheduler {
      * Runs every 5 minutes to ensure state stays in sync.
      */
     @Scheduled(fixedRate = 300000)  // 5 minutes
+    @Transactional(readOnly = true)
     public void refreshAllChoreStates() {
         try {
             List<Chore> allChores = choreService.getAllChores();

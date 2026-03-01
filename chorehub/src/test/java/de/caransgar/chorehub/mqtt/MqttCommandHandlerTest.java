@@ -23,14 +23,11 @@ class MqttCommandHandlerTest {
     @Mock
     private ChoreService choreService;
 
-    @Mock
-    private ChoreStatePublisher statePublisher;
-
     private MqttCommandHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new MqttCommandHandler(choreService, statePublisher);
+        handler = new MqttCommandHandler(choreService);
     }
 
     @Test
@@ -47,7 +44,6 @@ class MqttCommandHandlerTest {
         handler.handleMqttCommand(message);
 
         verify(choreService).markChoreAsDone(42L);
-        verify(statePublisher).publishStatusAndAttributes(chore);
     }
 
     @Test
@@ -64,7 +60,6 @@ class MqttCommandHandlerTest {
         handler.handleMqttCommand(message);
 
         verify(choreService).markChoreAsDone(7L);
-        verify(statePublisher).publishStatusAndAttributes(chore);
     }
 
     @Test
@@ -77,6 +72,5 @@ class MqttCommandHandlerTest {
         handler.handleMqttCommand(message);
 
         verify(choreService, never()).markChoreAsDone(7L);
-        verify(statePublisher, never()).publishStatusAndAttributes(org.mockito.ArgumentMatchers.any());
     }
 }
